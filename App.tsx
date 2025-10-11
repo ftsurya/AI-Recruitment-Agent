@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef } from 'react';
 import { ViewState, InterviewType, ChatMessage, FinalReport, HistoricalInterviewRecord, CandidateStatus, TranscriptEntry } from './types';
 import { aiRecruiterService } from './services/geminiService';
@@ -223,12 +224,15 @@ const InterviewIllustration: React.FC<{ className?: string }> = ({ className }) 
     </svg>
 );
 
+type UserRole = 'Candidate' | 'HR';
+
 interface LoginPageProps {
-  onMicrosoftLogin: () => void;
-  onGoogleLogin: () => void;
+  onLogin: (role: UserRole) => void;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onMicrosoftLogin, onGoogleLogin }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+  const [selectedRole, setSelectedRole] = useState<UserRole>('Candidate');
+
   return (
     <div className="min-h-screen w-full bg-slate-100 text-slate-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center animate-fade-in">
@@ -237,18 +241,32 @@ const LoginPage: React.FC<LoginPageProps> = ({ onMicrosoftLogin, onGoogleLogin }
             <h1 className="text-2xl font-bold">AI Recruiting Agent</h1>
         </div>
         <div className="my-6"><InterviewIllustration className="w-48 h-auto mx-auto"/></div>
-        <h2 className="text-2xl font-semibold mb-2">Welcome to the AI Recruitment Agent</h2>
-        <p className="text-slate-500 mb-8">Sign in or sign up</p>
+        <h2 className="text-2xl font-semibold mb-2">Welcome Back!</h2>
+        <p className="text-slate-500 mb-4">Please select your role to continue.</p>
+        <div className="flex bg-slate-200 p-1 rounded-full mb-8 w-full max-w-sm mx-auto">
+            <button
+                onClick={() => setSelectedRole('Candidate')}
+                className={`w-1/2 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${selectedRole === 'Candidate' ? 'bg-white text-blue-600 shadow' : 'text-slate-500 hover:bg-slate-300/70'}`}
+            >
+                I am a Candidate
+            </button>
+            <button
+                onClick={() => setSelectedRole('HR')}
+                className={`w-1/2 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${selectedRole === 'HR' ? 'bg-white text-blue-600 shadow' : 'text-slate-500 hover:bg-slate-300/70'}`}
+            >
+                I am an HR Professional
+            </button>
+        </div>
         <div className="space-y-4">
             <button
-              onClick={onMicrosoftLogin}
+              onClick={() => onLogin(selectedRole)}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all flex items-center justify-center gap-3 text-lg"
             >
               <MicrosoftIcon className="w-6 h-6" />
               <span>Login with Microsoft</span>
             </button>
             <button
-              onClick={onGoogleLogin}
+              onClick={() => onLogin(selectedRole)}
               className="w-full bg-white hover:bg-gray-100 text-slate-700 font-semibold py-3 px-6 rounded-lg transition-all flex items-center justify-center gap-3 text-lg border border-slate-300"
             >
               <GoogleIcon className="w-6 h-6" />
@@ -454,13 +472,21 @@ const App: React.FC = () => {
         setHistory(prev => prev.map(rec => rec.id === id ? {...rec, status: newStatus, notes: newNotes} : rec));
     }
 
+    const handleLogin = (role: UserRole) => {
+      if (role === 'HR') {
+        setViewState(ViewState.HISTORY);
+      } else {
+        setViewState(ViewState.SETUP);
+      }
+    };
+
     let currentView;
     switch (viewState) {
         case ViewState.LANDING:
             currentView = <LandingPage onLoginClick={() => setViewState(ViewState.LOGIN)} />;
             break;
         case ViewState.LOGIN:
-            currentView = <LoginPage onMicrosoftLogin={() => setViewState(ViewState.SETUP)} onGoogleLogin={() => setViewState(ViewState.SETUP)} />;
+            currentView = <LoginPage onLogin={handleLogin} />;
             break;
         case ViewState.INTERVIEW:
             currentView = <InterviewScreen 
@@ -498,6 +524,7 @@ const App: React.FC = () => {
                         setJobDescription={setJobDescription}
                         onStart={handleStartInterview}
                         isLoading={isLoading}
+                        // Fix: Corrected typo from onFilechange to onFileChange.
                         onFileChange={handleFileChange}
                         resumeFileName={resumeFileName}
                         onRemoveResume={() => { setResumeFileName(null); setResumeText(''); }}
