@@ -15,6 +15,7 @@ interface MediaStreams {
 
 const App: React.FC = () => {
     const [viewState, setViewState] = useState<ViewState>(ViewState.SETUP);
+    const [jobTitle, setJobTitle] = useState<string>('');
     const [jobDescription, setJobDescription] = useState<string>('');
     const [resumeText, setResumeText] = useState<string>('');
     const [resumeFileName, setResumeFileName] = useState<string | null>(null);
@@ -48,6 +49,7 @@ const App: React.FC = () => {
     const resetState = useCallback(() => {
         stopMediaStreams();
         setViewState(ViewState.SETUP);
+        setJobTitle('');
         setJobDescription('');
         setResumeText('');
         setResumeFileName(null);
@@ -74,16 +76,18 @@ const App: React.FC = () => {
     };
     
     const handleStartInterview = async () => {
-        if (!jobDescription.trim() || !resumeText) {
-            setError("Job description and resume are required.");
+        if (!jobTitle.trim() || !jobDescription.trim() || !resumeText) {
+            setError("Job title, job description and resume are required.");
             return;
         }
         setIsLoading(true);
         setError(null);
 
+        const jobContext = `Job Title: ${jobTitle}\n\n${jobDescription}`;
+
         if (interviewType === InterviewType.CHAT) {
             try {
-                const firstMessage = await aiRecruiterService.generateFirstQuestion(jobDescription, resumeText);
+                const firstMessage = await aiRecruiterService.generateFirstQuestion(jobContext, resumeText);
                 setChatHistory([firstMessage]);
                 setViewState(ViewState.INTERVIEW);
             } catch (e) {
@@ -135,12 +139,13 @@ const App: React.FC = () => {
         setIsAiResponding(true);
 
         const questionCount = updatedChatHistory.filter(m => m.role === 'ai').length;
+        const jobContext = `Job Title: ${jobTitle}\n\n${jobDescription}`;
 
         if (questionCount >= 11) {
              await generateAndSaveReport(updatedChatHistory, message);
         } else {
             try {
-                const { analysis, nextQuestion } = await aiRecruiterService.getNextStep(updatedChatHistory, jobDescription, resumeText);
+                const { analysis, nextQuestion } = await aiRecruiterService.getNextStep(updatedChatHistory, jobContext, resumeText);
                 
                 const lastUserMessageIndex = updatedChatHistory.length - 1;
                 const historyWithAnalysis = [...updatedChatHistory];
@@ -170,13 +175,16 @@ const App: React.FC = () => {
             // Check if the last question was a coding challenge to pass the submission
             const lastAiMessage = finalChatHistory.filter(m => m.role === 'ai').pop();
             const submission = lastAiMessage?.is_coding_challenge ? codeSubmission : undefined;
+            
+            const jobContext = `Job Title: ${jobTitle}\n\n${jobDescription}`;
 
-            const report = await aiRecruiterService.generateFinalReport(finalChatHistory, jobDescription, resumeText, submission);
+            const report = await aiRecruiterService.generateFinalReport(finalChatHistory, jobContext, resumeText, submission);
             setFinalReport(report);
             
              const newRecord: HistoricalInterviewRecord = {
                 id: new Date().toISOString(),
                 date: new Date().toISOString(),
+                jobTitle: jobTitle,
                 resumeFileName: resumeFileName || "Unknown",
                 jobDescriptionSnippet: jobDescription.substring(0, 100) + "...",
                 report: report,
@@ -230,7 +238,7 @@ const App: React.FC = () => {
             currentView = <LiveInterviewScreen
                         mediaStreams={mediaStreams}
                         onEndInterview={handleEndLiveInterview}
-                        jobDescription={jobDescription}
+                        jobDescription={`Job Title: ${jobTitle}\n\n${jobDescription}`}
                         resumeText={resumeText}
                         onRestart={resetState}
                     />;
@@ -238,6 +246,8 @@ const App: React.FC = () => {
         case ViewState.SETUP:
         default:
             currentView = <SetupScreen 
+                        jobTitle={jobTitle}
+                        setJobTitle={setJobTitle}
                         jobDescription={jobDescription}
                         setJobDescription={setJobDescription}
                         onStart={handleStartInterview}

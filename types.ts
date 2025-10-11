@@ -78,6 +78,7 @@ export interface FinalReport {
 export interface HistoricalInterviewRecord {
   id: string;
   date: string;
+  jobTitle: string;
   resumeFileName: string;
   jobDescriptionSnippet: string;
   report: FinalReport;

@@ -76,6 +76,7 @@ const HrDashboard: React.FC<HrDashboardProps> = ({ records, onBack, onUpdateReco
                                 <tr>
                                     <th className="p-4">Date</th>
                                     <th className="p-4">Candidate (Resume)</th>
+                                    <th className="p-4">Role</th>
                                     <th className="p-4">Score</th>
                                     <th className="p-4">Status</th>
                                     <th className="p-4">Actions</th>
@@ -86,6 +87,7 @@ const HrDashboard: React.FC<HrDashboardProps> = ({ records, onBack, onUpdateReco
                                     <tr key={record.id} className="border-b border-slate-700 hover:bg-slate-800/50">
                                         <td className="p-4 whitespace-nowrap">{new Date(record.date).toLocaleDateString()}</td>
                                         <td className="p-4 font-medium">{record.resumeFileName}</td>
+                                        <td className="p-4 font-medium">{record.jobTitle}</td>
                                         <td className="p-4">{record.report.feedback.overall_score} <span className="text-slate-400">/ 100</span></td>
                                         <td className="p-4"><StatusBadge status={record.status} /></td>
                                         <td className="p-4">
@@ -94,7 +96,7 @@ const HrDashboard: React.FC<HrDashboardProps> = ({ records, onBack, onUpdateReco
                                     </tr>
                                 )) : (
                                     <tr>
-                                        <td colSpan={5} className="text-center p-8 text-slate-400">No records found.</td>
+                                        <td colSpan={6} className="text-center p-8 text-slate-400">No records found.</td>
                                     </tr>
                                 )}
                             </tbody>

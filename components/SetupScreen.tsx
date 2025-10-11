@@ -4,6 +4,8 @@ import Spinner from './Spinner';
 import { UploadIcon, FileIcon, XCircleIcon, BriefcaseIcon, DocumentTextIcon, VideoCameraIcon, ChatBubbleLeftRightIcon } from './icons';
 
 interface SetupScreenProps {
+  jobTitle: string;
+  setJobTitle: (value: string) => void;
   jobDescription: string;
   setJobDescription: (value: string) => void;
   onStart: () => void;
@@ -41,6 +43,8 @@ const InterviewTypeButton: React.FC<{
 }
 
 const SetupScreen: React.FC<SetupScreenProps> = ({
+  jobTitle,
+  setJobTitle,
   jobDescription,
   setJobDescription,
   onStart,
@@ -53,7 +57,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
   error,
   onViewHistory,
 }) => {
-  const isStartDisabled = !jobDescription.trim() || !resumeFileName || isLoading;
+  const isStartDisabled = !jobTitle.trim() || !jobDescription.trim() || !resumeFileName || isLoading;
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 text-white animate-fade-in">
@@ -76,6 +80,18 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
         </div>
 
         <div className="bg-slate-900/50 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl animate-slide-in-up">
+           {/* Job Title */}
+           <div className="mb-6">
+                <h2 className="text-lg font-semibold text-slate-200 mb-3">Job Title</h2>
+                <input
+                    type="text"
+                    value={jobTitle}
+                    onChange={(e) => setJobTitle(e.target.value)}
+                    placeholder="e.g., Senior Software Engineer"
+                    className="w-full p-3 bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-300 placeholder-slate-500 text-sm"
+                    disabled={isLoading}
+                />
+            </div>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                {/* Job Description */}
                 <div>
