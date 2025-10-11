@@ -1,0 +1,23 @@
+{
+  "greeting": "Hello {candidate_name}, welcome to the chat interview! I'm excited to interview you today.",
+  "instructions": "The AI will guide you with explanations and hints but will not provide direct answers.",
+  "typingControl": {
+    "preventCandidateInputWhileAIIsTyping": true,
+    "preventAIInputWhileCandidateIsTyping": true
+  },
+  "codingTask": {
+    "description": "You will be given a Python coding task in an embedded Python IDE.",
+    "environment": {
+      "librariesIncluded": ["numpy", "pandas", "scipy", "matplotlib"]
+    },
+    "feedback": "Real-time feedback and hints will be provided to assist you."
+  },
+  "interactionFlow": [
+    "AI greets the candidate with a personalized message using the candidate's name from their resume.",
+    "Candidate responds to the greeting.",
+    "AI provides questions and explanations, ensuring no direct answers are given.",
+    "Candidate responds with answers or queries.",
+    "At the end, the AI provides a coding task with all necessary libraries included and offers real-time hints.",
+    "A summary and recap of the interview will be provided at the end, highlighting strengths and areas for improvement."
+  ]
+}

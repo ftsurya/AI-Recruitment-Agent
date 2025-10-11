@@ -1,0 +1,9 @@
+{
+  "name": " New AI Recruitment Agent",
+  "description": "An AI-powered recruitment platform that conducts fully interactive interviews, generates adaptive questions based on Job Description and Resume, evaluates candidate responses in real-time, provides detailed feedback, and estimates suggested salary/costing.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "display-capture"
+  ]
+}
