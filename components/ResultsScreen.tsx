@@ -24,7 +24,7 @@ const Pill: React.FC<{ text: string; color: 'green' | 'red' }> = ({ text, color 
 const ResultsScreen: React.FC<ResultsScreenProps> = ({ report, onRestart, isLoading }) => {
   if (isLoading || !report) {
     return (
-        <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 text-white">
+        <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 text-white bg-[#0f172a]">
             <div className="animate-pulse text-center">
                  <div className="w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
                 <h2 className="text-2xl font-bold mt-6">Generating Your Report...</h2>
@@ -42,7 +42,7 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ report, onRestart, isLoad
     : 'text-slate-300';
 
   return (
-    <div className="min-h-screen w-full p-4 md:p-8 text-white animate-fade-in">
+    <div className="min-h-screen w-full p-4 md:p-8 text-white animate-fade-in bg-[#0f172a]">
         <div className="max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-center mb-8">
                 <h1 className="text-4xl font-bold text-slate-100">Interview Report</h1>

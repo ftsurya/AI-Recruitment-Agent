@@ -122,7 +122,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
   const progress = Math.min(((questionCount - 1) / 11) * 100, 100);
 
   return (
-    <div className="relative h-screen w-full flex flex-col text-white">
+    <div className="relative h-screen w-full flex flex-col text-white bg-[#0f172a]">
       {showWarning && <WarningModal message="Warning: Your response has been flagged for review." />}
       {isTerminated && <TerminationModal onConfirmEnd={onConfirmTermination} />}
 

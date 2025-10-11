@@ -1,4 +1,6 @@
 export enum ViewState {
+  LANDING = "LANDING",
+  LOGIN = "LOGIN",
   SETUP = "SETUP",
   INTERVIEW = "INTERVIEW",
   RESULTS = "RESULTS",

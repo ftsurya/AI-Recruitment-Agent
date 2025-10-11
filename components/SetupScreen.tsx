@@ -60,7 +60,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
   const isStartDisabled = !jobTitle.trim() || !jobDescription.trim() || !resumeFileName || isLoading;
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 text-white animate-fade-in">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 text-white animate-fade-in bg-[#0f172a]">
        <div className="absolute top-6 right-6">
         <button
           onClick={onViewHistory}

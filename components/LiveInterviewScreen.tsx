@@ -3,7 +3,7 @@ import { GoogleGenAI, LiveServerMessage, Modality, Blob } from "@google/genai";
 import { aiRecruiterService } from '../services/geminiService';
 import { LIVE_INTERVIEWER_PERSONA } from '../constants';
 import { TranscriptEntry } from '../types';
-import { RobotIcon, VolumeUpIcon, XIcon, MicrophoneIcon, ScreenShareIcon } from './icons';
+import { RobotIcon, VolumeUpIcon, XIcon, MicrophoneIcon, ScreenShareIcon, ExclamationTriangleIcon } from './icons';
 
 interface MediaStreams {
     camera: MediaStream;
@@ -69,7 +69,7 @@ async function decodeAudioData(data: Uint8Array, ctx: AudioContext): Promise<Aud
     return buffer;
 }
 
-const WarningModal: React.FC = () => (
+const CheatingWarningModal: React.FC = () => (
     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-yellow-500/20 border-2 border-yellow-400 text-yellow-200 px-8 py-4 rounded-lg shadow-2xl z-50 animate-fade-in">
         <p className="text-lg font-bold">Warning: Please do not use your mobile phone.</p>
     </div>
@@ -85,6 +85,13 @@ const TerminationModal: React.FC<{ onConfirmEnd: () => void }> = ({ onConfirmEnd
     </div>
 );
 
+const ProctoringWarning: React.FC<{ text: string }> = ({ text }) => (
+    <div className="bg-yellow-900/50 border border-yellow-600 backdrop-blur-md text-yellow-200 px-3 py-2 rounded-lg text-sm flex items-center gap-2 animate-fade-in shadow-lg">
+        <ExclamationTriangleIcon className="w-5 h-5 flex-shrink-0" />
+        <span>{text}</span>
+    </div>
+);
+
 
 const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams, onEndInterview, jobDescription, resumeText, onRestart }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -97,6 +104,7 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
     const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
     const transcriptEndRef = useRef<HTMLDivElement>(null);
     const proctoringIntervalRef = useRef<number | null>(null);
+    const proctoringAudioIntervalRef = useRef<number | null>(null);
     const speechDetectionTimeoutRef = useRef<number | null>(null);
 
 
@@ -108,9 +116,15 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
     const [isMuted, setIsMuted] = useState(false);
     
     const [warningCount, setWarningCount] = useState(0);
-    const [showWarning, setShowWarning] = useState(false);
+    const [showCheatingWarning, setShowCheatingWarning] = useState(false);
     const [isTerminated, setIsTerminated] = useState(false);
     const [isAbsenceWarningActive, setIsAbsenceWarningActive] = useState(false);
+    
+    const [proctoringIssues, setProctoringIssues] = useState({
+        gaze: false,
+        quality: '',
+        noise: false,
+    });
 
     const nextStartTimeRef = useRef(0);
     const audioSourcesRef = useRef(new Set<AudioBufferSourceNode>());
@@ -129,6 +143,7 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
 
     const cleanup = useCallback(() => {
         if (proctoringIntervalRef.current) clearInterval(proctoringIntervalRef.current);
+        if (proctoringAudioIntervalRef.current) clearInterval(proctoringAudioIntervalRef.current);
         if (speechDetectionTimeoutRef.current) clearTimeout(speechDetectionTimeoutRef.current);
         if (scriptProcessorRef.current) scriptProcessorRef.current.disconnect();
         if (mediaStreamSourceRef.current) mediaStreamSourceRef.current.disconnect();
@@ -172,8 +187,8 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
         setWarningCount(prev => {
             const newCount = prev + 1;
             if (newCount === 1) {
-                setShowWarning(true);
-                setTimeout(() => setShowWarning(false), 5000);
+                setShowCheatingWarning(true);
+                setTimeout(() => setShowCheatingWarning(false), 5000);
             } else if (newCount >= 2) {
                 setIsTerminated(true);
             }
@@ -196,21 +211,27 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
         if (!base64Image) return;
 
         const result = await aiRecruiterService.analyzeFrame(base64Image, 'webcam');
-        if (result.cheating_detected && result.reason.toLowerCase().includes('phone')) {
+        
+        if (result.cheating_detected) {
             handleCheatingDetected();
         }
 
         if (result.candidate_absent) {
             if (!isAbsenceWarningActive) {
                 setIsAbsenceWarningActive(true);
-                if (isMuted) {
-                    handleToggleMute(); 
-                }
+                if (isMuted) handleToggleMute(); 
                 speakWarning("Please sit before the camera and continue the interview.", () => {
                     setIsAbsenceWarningActive(false);
                 });
             }
         }
+
+        setProctoringIssues(prev => ({
+            ...prev,
+            gaze: result.eye_contact_deviation,
+            quality: result.video_quality_issue ? result.video_quality_reason : '',
+        }));
+
     }, [isTerminated, handleCheatingDetected, speakWarning, isAbsenceWarningActive, isMuted, handleToggleMute]);
 
     useEffect(() => {
@@ -243,6 +264,24 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
                         };
                         source.connect(scriptProcessor);
                         scriptProcessor.connect(inputAudioContextRef.current.destination);
+
+                        // Client-side audio proctoring
+                        const audioContext = inputAudioContextRef.current;
+                        const analyser = audioContext.createAnalyser();
+                        analyser.fftSize = 256;
+                        const bufferLength = analyser.frequencyBinCount;
+                        const dataArray = new Uint8Array(bufferLength);
+                        source.connect(analyser);
+                        
+                        proctoringAudioIntervalRef.current = window.setInterval(() => {
+                            analyser.getByteFrequencyData(dataArray);
+                            const average = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
+                            if (average > 35) { // Threshold for background noise
+                                setProctoringIssues(prev => ({...prev, noise: true}));
+                            } else {
+                                setProctoringIssues(prev => ({...prev, noise: false}));
+                            }
+                        }, 2000);
                     },
                     onmessage: async (message: LiveServerMessage) => {
                         if (isTerminated) return;
@@ -314,9 +353,9 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
     }
 
     return (
-        <div className="h-screen w-full flex flex-col text-white p-4 gap-4 animate-fade-in relative">
+        <div className="h-screen w-full flex flex-col text-white p-4 gap-4 animate-fade-in relative bg-[#0f172a]">
             <canvas ref={webcamCanvasRef} style={{ display: 'none' }}></canvas>
-            {showWarning && <WarningModal />}
+            {showCheatingWarning && <CheatingWarningModal />}
 
             {/* Header */}
              <header className="relative flex-shrink-0 flex items-center h-8">
@@ -353,6 +392,12 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
                                     <span>Screen Sharing Active</span>
                                 </div>
                             )}
+                        </div>
+                         {/* Proctoring Warnings Display */}
+                        <div className="absolute bottom-4 left-4 flex flex-col gap-2 z-10 max-w-sm">
+                            {proctoringIssues.quality && <ProctoringWarning text={`Video Quality: ${proctoringIssues.quality}`} />}
+                            {proctoringIssues.gaze && <ProctoringWarning text="Please maintain focus on the screen." />}
+                            {proctoringIssues.noise && <ProctoringWarning text="Excessive background noise detected." />}
                         </div>
                     </div>
                      {/* Code Editor */}

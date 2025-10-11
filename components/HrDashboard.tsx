@@ -46,7 +46,7 @@ const HrDashboard: React.FC<HrDashboardProps> = ({ records, onBack, onUpdateReco
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
     return (
-        <div className="min-h-screen w-full p-4 md:p-8 text-white animate-fade-in">
+        <div className="min-h-screen w-full p-4 md:p-8 text-white animate-fade-in bg-[#0f172a]">
             <div className="max-w-5xl mx-auto">
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold">HR Dashboard</h1>
