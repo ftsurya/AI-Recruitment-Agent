@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChatMessage } from '../types';
+import { ChatMessage, User } from '../types';
 import Spinner from './Spinner';
 import { ExclamationTriangleIcon } from './icons';
 
@@ -12,6 +12,8 @@ interface InterviewScreenProps {
   warningCount: number;
   isTerminated: boolean;
   onConfirmTermination: () => void;
+  currentUser: User | null;
+  onCandidateIdle: () => void;
 }
 
 const ChatBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
@@ -84,12 +86,15 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
   onRestart,
   warningCount,
   isTerminated,
-  onConfirmTermination
+  onConfirmTermination,
+  currentUser,
+  onCandidateIdle,
 }) => {
   const [input, setInput] = useState('');
   const [code, setCode] = useState('');
   const [showWarning, setShowWarning] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const idleTimerRef = useRef<number | null>(null);
   
   const isCodingActive = chatHistory[chatHistory.length - 1]?.is_coding_challenge ?? false;
 
@@ -107,8 +112,37 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
     }
   }, [warningCount]);
 
+  // Effect for handling candidate inactivity
+  useEffect(() => {
+    // Clear any existing timer when dependencies change
+    if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+    }
+
+    const lastMessage = chatHistory[chatHistory.length - 1];
+    // Set a timer only if the last message was from the AI, it wasn't a nudge, and the AI isn't currently thinking of a new response.
+    if (lastMessage?.role === 'ai' && !isAiResponding && !lastMessage.isNudge) {
+        idleTimerRef.current = window.setTimeout(() => {
+            onCandidateIdle();
+        }, 60000); // 60 seconds
+    }
+
+    // Cleanup function to clear the timer
+    return () => {
+        if (idleTimerRef.current) {
+            clearTimeout(idleTimerRef.current);
+        }
+    };
+  }, [chatHistory, isAiResponding, onCandidateIdle]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Clear the inactivity timer as soon as the user submits
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+    
     const messageToSend = isCodingActive ? code : input;
     if (messageToSend.trim() && !isAiResponding) {
       onSendMessage(messageToSend);
@@ -129,7 +163,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
       {/* Header */}
       <header className="flex items-center justify-between p-4 bg-white/5 backdrop-blur-md border-b border-white/10 shadow-lg">
         <div>
-            <h1 className="text-xl font-bold text-slate-100">AI Interview</h1>
+            <h1 className="text-xl font-bold text-slate-100">AI Interview for {currentUser?.name || 'Candidate'}</h1>
             <p className="text-sm text-blue-300">Question {questionCount} of 11</p>
         </div>
         <button onClick={onRestart} className="px-3 py-1 text-sm font-medium text-blue-300 bg-white/10 rounded-lg hover:bg-white/20 transition-colors flex items-center gap-2">

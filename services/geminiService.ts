@@ -1,6 +1,10 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { ChatMessage, FinalReport, NextStep } from '../types';
-import { GREETING_PROMPT, NEXT_STEP_PROMPT, FINAL_REPORT_PROMPT, nextStepSchema, finalReportSchema, ANALYZE_RESPONSE_PROMPT, textProctoringSchema } from '../constants';
+import { 
+    GREETING_PROMPT, NEXT_STEP_PROMPT, FINAL_REPORT_PROMPT, nextStepSchema, finalReportSchema, 
+    ANALYZE_RESPONSE_PROMPT, textProctoringSchema,
+    COMMUNICATION_EMAIL_PROMPT, communicationEmailSchema
+} from '../constants';
 
 const API_KEY = process.env.API_KEY;
 
@@ -12,10 +16,46 @@ if (!ai) {
 
 const model = 'gemini-2.5-flash';
 
+// Helper function for retrying API calls with exponential backoff.
+const generateContentWithRetry = async (
+    params: any,
+    maxRetries = 3,
+    initialDelay = 1500
+) => {
+    if (!ai) throw new Error("AI service is not initialized. Is the API_KEY set?");
+    let lastError: any;
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            const response = await ai.models.generateContent(params);
+            // Add a basic check to ensure response is not empty before returning.
+            // The .text getter returns an empty string if no text part is found.
+            if (!response || !response.text) {
+                 throw new Error("Received an empty or invalid response from the AI model.");
+            }
+            return response;
+        } catch (error) {
+            lastError = error;
+            // Implement exponential backoff with jitter
+            const delay = initialDelay * Math.pow(2, i);
+            const jitter = delay * 0.2 * Math.random(); // Add jitter to prevent thundering herd
+            console.warn(`API call attempt ${i + 1} of ${maxRetries} failed. Retrying in ${Math.round((delay + jitter) / 1000)}s...`, error);
+            if (i < maxRetries - 1) {
+                await new Promise(resolve => setTimeout(resolve, delay + jitter));
+            }
+        }
+    }
+    console.error("API call failed after all retries.", lastError);
+    // Improve error thrown to be more specific if it's a 500 error
+    if (lastError && lastError.toString().includes('500')) {
+        throw new Error("The AI service is currently experiencing temporary issues. Please try again shortly.");
+    }
+    throw lastError;
+};
+
+
 const generateContentWithSchema = async <T,>(prompt: string, schema: any): Promise<T> => {
-  if (!ai) throw new Error("AI service is not initialized. Is the API_KEY set?");
   try {
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithRetry({
       model,
       contents: prompt,
       config: {
@@ -26,16 +66,16 @@ const generateContentWithSchema = async <T,>(prompt: string, schema: any): Promi
     const jsonText = response.text.trim();
     return JSON.parse(jsonText) as T;
   } catch (error) {
-    console.error("Error generating content with schema:", error);
-    throw new Error("Failed to get a valid response from the AI model.");
+    console.error("Error generating content with schema after retries:", error);
+    // Propagate a more informative error message
+    throw new Error(`Failed to get a valid response from the AI model. Reason: ${error.message}`);
   }
 };
 
 
-const generateFirstQuestion = async (jobDescription: string, resumeText: string): Promise<ChatMessage> => {
-    if (!ai) throw new Error("AI service is not initialized. Is the API_KEY set?");
+const generateFirstQuestion = async (jobDescription: string, resumeText: string, totalQuestions: number): Promise<ChatMessage> => {
     const prompt = `
-    ${GREETING_PROMPT}
+    ${GREETING_PROMPT(totalQuestions)}
 
     --- JOB DESCRIPTION ---
     ${jobDescription}
@@ -44,7 +84,7 @@ const generateFirstQuestion = async (jobDescription: string, resumeText: string)
     ${resumeText}
     `;
     
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithRetry({
         model,
         contents: prompt
     });
@@ -56,11 +96,12 @@ const generateFirstQuestion = async (jobDescription: string, resumeText: string)
     };
 };
 
-const getNextStep = async (chatHistory: ChatMessage[], jobDescription: string, resumeText: string): Promise<NextStep> => {
-    const historyString = chatHistory.map(m => `${m.role}: ${m.content}`).join('\n');
+const getNextStep = async (chatHistory: ChatMessage[], jobDescription: string, resumeText: string, totalQuestions: number, technicalRatio: number, customQuestions: string): Promise<NextStep> => {
+    const recentHistory = chatHistory.slice(-10); // Keep context manageable
+    const historyString = recentHistory.map(m => `${m.role}: ${m.content}`).join('\n');
     
     const prompt = `
-    ${NEXT_STEP_PROMPT}
+    ${NEXT_STEP_PROMPT(totalQuestions, technicalRatio, customQuestions)}
 
     --- JOB DESCRIPTION ---
     ${jobDescription}
@@ -68,7 +109,7 @@ const getNextStep = async (chatHistory: ChatMessage[], jobDescription: string, r
     --- RESUME ---
     ${resumeText}
 
-    --- CHAT HISTORY ---
+    --- RECENT CHAT HISTORY ---
     ${historyString}
     `;
 
@@ -123,8 +164,12 @@ interface TextProctoringResult {
     reason: string;
 }
 
+interface GeneratedEmail {
+    subject: string;
+    body: string;
+}
+
 const analyzeFrame = async (base64Image: string, streamType: 'webcam' | 'screen'): Promise<VideoProctoringResult> => {
-    if (!ai) throw new Error("AI service is not initialized. Is the API_KEY set?");
     const prompt = streamType === 'webcam' ? `
     You are an AI proctor for an online job interview. Analyze this single image frame captured from the candidate's webcam. Your task is to detect policy violations and quality issues.
 
@@ -154,7 +199,7 @@ const analyzeFrame = async (base64Image: string, streamType: 'webcam' | 'screen'
     };
 
     try {
-        const response = await ai.models.generateContent({
+        const response = await generateContentWithRetry({
             model,
             contents: { parts: [{ text: prompt }, imagePart] },
             config: {
@@ -165,13 +210,12 @@ const analyzeFrame = async (base64Image: string, streamType: 'webcam' | 'screen'
         const jsonText = response.text.trim();
         return JSON.parse(jsonText) as VideoProctoringResult;
     } catch (error) {
-        console.error("Error analyzing frame:", error);
+        console.error("Error analyzing frame after retries:", error);
         return { cheating_detected: false, cheating_reason: "Error during analysis", candidate_absent: false, eye_contact_deviation: false, video_quality_issue: false, video_quality_reason: 'None' };
     }
 };
 
 const analyzeTextResponse = async (responseText: string): Promise<TextProctoringResult> => {
-    if (!ai) throw new Error("AI service is not initialized. Is the API_KEY set?");
     const prompt = `
         ${ANALYZE_RESPONSE_PROMPT}
 
@@ -180,7 +224,7 @@ const analyzeTextResponse = async (responseText: string): Promise<TextProctoring
     `;
 
     try {
-        const response = await ai.models.generateContent({
+        const response = await generateContentWithRetry({
             model,
             contents: prompt,
             config: {
@@ -191,10 +235,23 @@ const analyzeTextResponse = async (responseText: string): Promise<TextProctoring
         const jsonText = response.text.trim();
         return JSON.parse(jsonText) as TextProctoringResult;
     } catch (error) {
-        console.error("Error analyzing text response:", error);
+        console.error("Error analyzing text response after retries:", error);
         return { cheating_detected: false, reason: "Error during analysis" };
     }
 }
+
+const generateCommunicationEmail = async (report: FinalReport, candidateName: string, emailType: 'NEXT_STEPS' | 'REJECTION'): Promise<GeneratedEmail> => {
+    const prompt = `
+        ${COMMUNICATION_EMAIL_PROMPT(emailType)}
+
+        --- CANDIDATE NAME ---
+        ${candidateName}
+
+        --- INTERVIEW REPORT ---
+        ${JSON.stringify(report, null, 2)}
+    `;
+    return generateContentWithSchema<GeneratedEmail>(prompt, communicationEmailSchema);
+};
 
 
 export const aiRecruiterService = {
@@ -203,4 +260,5 @@ export const aiRecruiterService = {
   generateFinalReport,
   analyzeFrame,
   analyzeTextResponse,
+  generateCommunicationEmail,
 };

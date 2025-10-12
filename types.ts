@@ -1,3 +1,4 @@
+// FIX: Removed circular import of ViewState from itself.
 export enum ViewState {
   LANDING = "LANDING",
   LOGIN = "LOGIN",
@@ -20,6 +21,11 @@ export enum CandidateStatus {
   REJECTED = "Rejected"
 }
 
+export interface User {
+  name: string;
+  role: 'Candidate' | 'HR';
+}
+
 export interface ResponseAnalysis {
   answer_score: number;
   comments: string;
@@ -35,6 +41,7 @@ export interface ChatMessage {
     flagged: boolean;
     reason: string;
   };
+  isNudge?: boolean;
 }
 
 export interface NextQuestion {
@@ -81,14 +88,31 @@ export interface HistoricalInterviewRecord {
   id: string;
   date: string;
   jobTitle: string;
+  candidateName?: string;
+  candidateEmail?: string;
   resumeFileName: string;
+  resumeText?: string;
   jobDescriptionSnippet: string;
   report: FinalReport;
   status: CandidateStatus;
   notes?: string;
+  videoRecordingUrl?: string;
+  transcript?: TranscriptEntry[];
 }
 
 export interface TranscriptEntry {
     speaker: 'ai' | 'user';
     text: string;
+    timestamp?: number; // Optional timestamp for video sync
+}
+
+export interface InterviewTemplate {
+  id: string;
+  name: string;
+  companyName: string;
+  jobTitle: string;
+  jobDescription: string;
+  totalQuestions: number;
+  technicalRatio: number;
+  customQuestions: string;
 }

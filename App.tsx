@@ -1,7 +1,5 @@
-
-
 import React, { useState, useCallback, useRef } from 'react';
-import { ViewState, InterviewType, ChatMessage, FinalReport, HistoricalInterviewRecord, CandidateStatus, TranscriptEntry } from './types';
+import { ViewState, InterviewType, ChatMessage, FinalReport, HistoricalInterviewRecord, CandidateStatus, TranscriptEntry, InterviewTemplate, User } from './types';
 import { aiRecruiterService } from './services/geminiService';
 import SetupScreen from './components/SetupScreen';
 import InterviewScreen from './components/InterviewScreen';
@@ -212,15 +210,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
 type UserRole = 'Candidate' | 'HR';
 
 interface LoginPageProps {
-  onLogin: (role: UserRole) => void;
+  onLogin: (user: User) => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
 
   const handleLogin = () => {
-    if (selectedRole) {
-      onLogin(selectedRole);
+    if (selectedRole === 'Candidate') {
+      onLogin({ name: 'Alex Johnson', role: 'Candidate' });
+    } else if (selectedRole === 'HR') {
+      onLogin({ name: 'Sarah Chen', role: 'HR' });
     }
   };
 
@@ -284,12 +284,20 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 // --- Main App Component ---
 const App: React.FC = () => {
     const [viewState, setViewState] = useState<ViewState>(ViewState.LANDING);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [companyName, setCompanyName] = useState<string>('');
     const [jobTitle, setJobTitle] = useState<string>('');
     const [jobDescription, setJobDescription] = useState<string>('');
+    const [candidateEmail, setCandidateEmail] = useState<string>('');
     const [resumeText, setResumeText] = useState<string>('');
     const [resumeFileName, setResumeFileName] = useState<string | null>(null);
-    const [interviewType, setInterviewType] = useState<InterviewType>(InterviewType.LIVE);
+    const [interviewType, setInterviewType] = useState<InterviewType>(InterviewType.CHAT);
     
+    // Interview Customization State
+    const [totalQuestions, setTotalQuestions] = useState<number>(11);
+    const [technicalRatio, setTechnicalRatio] = useState<number>(50); // As a percentage
+    const [customQuestions, setCustomQuestions] = useState<string>('');
+
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -304,6 +312,7 @@ const App: React.FC = () => {
     const mediaStreamsRef = useRef<MediaStreams | null>(null);
 
     const [history, setHistory] = useLocalStorage<HistoricalInterviewRecord[]>('interviewHistory', []);
+    const [templates, setTemplates] = useLocalStorage<InterviewTemplate[]>('interviewTemplates', []);
     
     const stopMediaStreams = useCallback(() => {
         if (mediaStreamsRef.current) {
@@ -314,11 +323,12 @@ const App: React.FC = () => {
         }
     }, []);
 
-    const resetState = useCallback(() => {
+    const clearInterviewState = useCallback(() => {
         stopMediaStreams();
-        setViewState(ViewState.SETUP);
+        setCompanyName('');
         setJobTitle('');
         setJobDescription('');
+        setCandidateEmail('');
         setResumeText('');
         setResumeFileName(null);
         setChatHistory([]);
@@ -329,6 +339,41 @@ const App: React.FC = () => {
         setChatWarningCount(0);
         setIsChatTerminated(false);
     }, [stopMediaStreams]);
+
+    const handleRestart = useCallback(() => {
+        clearInterviewState();
+        setViewState(ViewState.SETUP);
+    }, [clearInterviewState]);
+
+    const handleLogout = useCallback(() => {
+        clearInterviewState();
+        setCurrentUser(null);
+        setViewState(ViewState.LANDING);
+    }, [clearInterviewState]);
+    
+    const handleUpdateRecord = (recordId: string, updatedFields: Partial<HistoricalInterviewRecord>) => {
+        setHistory(prevHistory => 
+            prevHistory.map(record => 
+                record.id === recordId ? { ...record, ...updatedFields } : record
+            )
+        );
+    };
+
+    const handleCandidateIdle = () => {
+        if (isAiResponding) return;
+        
+        const lastMessage = chatHistory.length > 0 ? chatHistory[chatHistory.length - 1] : null;
+    
+        if (lastMessage && lastMessage.role === 'ai' && !lastMessage.isNudge) {
+            const nudgeMessage: ChatMessage = {
+                role: 'ai',
+                content: "Just checking in, are you still there? Please take your time to respond.",
+                isNudge: true
+            };
+            setChatHistory(prev => [...prev, nudgeMessage]);
+        }
+    };
+
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -355,7 +400,7 @@ const App: React.FC = () => {
 
         if (interviewType === InterviewType.CHAT) {
             try {
-                const firstMessage = await aiRecruiterService.generateFirstQuestion(jobContext, resumeText);
+                const firstMessage = await aiRecruiterService.generateFirstQuestion(jobContext, resumeText, totalQuestions);
                 setChatHistory([firstMessage]);
                 setViewState(ViewState.INTERVIEW);
             } catch (e) {
@@ -405,11 +450,11 @@ const App: React.FC = () => {
         const questionCount = updatedChatHistory.filter(m => m.role === 'ai').length;
         const jobContext = `Job Title: ${jobTitle}\n\n${jobDescription}`;
 
-        if (questionCount >= 11) {
+        if (questionCount >= totalQuestions) {
              await generateAndSaveReport(updatedChatHistory, message);
         } else {
             try {
-                const { analysis, nextQuestion } = await aiRecruiterService.getNextStep(updatedChatHistory, jobContext, resumeText);
+                const { analysis, nextQuestion } = await aiRecruiterService.getNextStep(updatedChatHistory, jobContext, resumeText, totalQuestions, technicalRatio, customQuestions);
                 
                 const lastUserMessageIndex = updatedChatHistory.length - 1;
                 const historyWithAnalysis = [...updatedChatHistory];
@@ -433,7 +478,12 @@ const App: React.FC = () => {
         }
     };
 
-    const generateAndSaveReport = async (finalChatHistory: ChatMessage[], codeSubmission?: string) => {
+    const generateAndSaveReport = async (
+        finalChatHistory: ChatMessage[], 
+        codeSubmission?: string, 
+        videoUrl?: string,
+        liveTranscript?: TranscriptEntry[]
+    ) => {
         try {
             setViewState(ViewState.RESULTS); 
             const lastAiMessage = finalChatHistory.filter(m => m.role === 'ai').pop();
@@ -444,14 +494,21 @@ const App: React.FC = () => {
             const report = await aiRecruiterService.generateFinalReport(finalChatHistory, jobContext, resumeText, submission);
             setFinalReport(report);
             
+            const transcriptToSave = liveTranscript || finalChatHistory.map(m => ({ speaker: m.role, text: m.content }));
+            
              const newRecord: HistoricalInterviewRecord = {
                 id: new Date().toISOString(),
                 date: new Date().toISOString(),
                 jobTitle: jobTitle,
+                candidateName: currentUser?.name,
+                candidateEmail: candidateEmail,
                 resumeFileName: resumeFileName || "Unknown",
+                resumeText: resumeText,
                 jobDescriptionSnippet: jobDescription.substring(0, 100) + "...",
                 report: report,
                 status: CandidateStatus.PENDING,
+                videoRecordingUrl: videoUrl,
+                transcript: transcriptToSave,
             };
             setHistory(prev => [...prev, newRecord]);
 
@@ -464,23 +521,44 @@ const App: React.FC = () => {
         }
     }
 
-    const handleEndLiveInterview = async (transcript: TranscriptEntry[], code: string) => {
+    const handleEndLiveInterview = async (transcript: TranscriptEntry[], code: string, videoUrl: string) => {
         stopMediaStreams();
         const chatLikeTranscript: ChatMessage[] = transcript.map(t => ({ role: t.speaker, content: t.text }));
-        await generateAndSaveReport(chatLikeTranscript, code);
+        await generateAndSaveReport(chatLikeTranscript, code, videoUrl, transcript);
     }
     
-    const handleUpdateRecord = (id: string, newStatus: CandidateStatus, newNotes: string) => {
-        setHistory(prev => prev.map(rec => rec.id === id ? {...rec, status: newStatus, notes: newNotes} : rec));
-    }
-
-    const handleLogin = (role: UserRole) => {
-      if (role === 'HR') {
+    const handleLogin = (user: User) => {
+      setCurrentUser(user);
+      if (user.role === 'HR') {
         setViewState(ViewState.HISTORY);
       } else {
         setViewState(ViewState.SETUP);
       }
     };
+
+    const handleLoadTemplate = (template: InterviewTemplate) => {
+        setCompanyName(template.companyName);
+        setJobTitle(template.jobTitle);
+        setJobDescription(template.jobDescription);
+        setTotalQuestions(template.totalQuestions);
+        setTechnicalRatio(template.technicalRatio);
+        setCustomQuestions(template.customQuestions);
+    };
+
+    // --- Template CRUD Handlers ---
+    const handleAddTemplate = (template: Omit<InterviewTemplate, 'id'>) => {
+        const newTemplate = { ...template, id: new Date().toISOString() };
+        setTemplates(prev => [...prev, newTemplate]);
+    };
+
+    const handleUpdateTemplate = (updatedTemplate: InterviewTemplate) => {
+        setTemplates(prev => prev.map(t => t.id === updatedTemplate.id ? updatedTemplate : t));
+    };
+
+    const handleDeleteTemplate = (templateId: string) => {
+        setTemplates(prev => prev.filter(t => t.id !== templateId));
+    };
+
 
     let currentView;
     switch (viewState) {
@@ -496,17 +574,28 @@ const App: React.FC = () => {
                         onSendMessage={handleSendMessage} 
                         isAiResponding={isAiResponding}
                         questionCount={chatHistory.filter(m => m.role === 'ai').length}
-                        onRestart={resetState}
+                        onRestart={handleRestart}
                         warningCount={chatWarningCount}
                         isTerminated={isChatTerminated}
-                        onConfirmTermination={resetState}
+                        onConfirmTermination={handleRestart}
+                        currentUser={currentUser}
+                        onCandidateIdle={handleCandidateIdle}
                    />;
             break;
         case ViewState.RESULTS:
-            currentView = <ResultsScreen report={finalReport} onRestart={resetState} isLoading={!finalReport} />;
+            currentView = <ResultsScreen report={finalReport} onRestart={handleRestart} isLoading={!finalReport} />;
             break;
         case ViewState.HISTORY:
-            currentView = <HrDashboard records={history} onBack={() => setViewState(ViewState.SETUP)} onUpdateRecord={handleUpdateRecord} />;
+            currentView = <HrDashboard 
+                            records={history} 
+                            templates={templates}
+                            onAddTemplate={handleAddTemplate}
+                            onUpdateTemplate={handleUpdateTemplate}
+                            onDeleteTemplate={handleDeleteTemplate}
+                            onLogout={handleLogout} 
+                            onUpdateRecord={handleUpdateRecord}
+                            currentUser={currentUser}
+                          />;
             break;
         case ViewState.LIVE:
             currentView = <LiveInterviewScreen
@@ -514,16 +603,21 @@ const App: React.FC = () => {
                         onEndInterview={handleEndLiveInterview}
                         jobDescription={`Job Title: ${jobTitle}\n\n${jobDescription}`}
                         resumeText={resumeText}
-                        onRestart={resetState}
+                        onRestart={handleRestart}
+                        currentUser={currentUser}
                     />;
             break;
         case ViewState.SETUP:
         default:
             currentView = <SetupScreen 
+                        companyName={companyName}
+                        setCompanyName={setCompanyName}
                         jobTitle={jobTitle}
                         setJobTitle={setJobTitle}
                         jobDescription={jobDescription}
                         setJobDescription={setJobDescription}
+                        candidateEmail={candidateEmail}
+                        setCandidateEmail={setCandidateEmail}
                         onStart={handleStartInterview}
                         isLoading={isLoading}
                         onFileChange={handleFileChange}
@@ -532,7 +626,16 @@ const App: React.FC = () => {
                         interviewType={interviewType}
                         setInterviewType={setInterviewType}
                         error={error}
-                        onViewHistory={() => setViewState(ViewState.HISTORY)}
+                        totalQuestions={totalQuestions}
+                        setTotalQuestions={setTotalQuestions}
+                        technicalRatio={technicalRatio}
+                        setTechnicalRatio={setTechnicalRatio}
+                        customQuestions={customQuestions}
+                        setCustomQuestions={setCustomQuestions}
+                        templates={templates}
+                        onLoadTemplate={handleLoadTemplate}
+                        currentUser={currentUser}
+                        onLogout={handleLogout}
                    />;
             break;
     }

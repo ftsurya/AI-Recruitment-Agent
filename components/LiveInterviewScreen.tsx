@@ -1,9 +1,8 @@
-
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob } from "@google/genai";
 import { aiRecruiterService } from '../services/geminiService';
 import { LIVE_INTERVIEWER_PERSONA } from '../constants';
-import { TranscriptEntry } from '../types';
+import { TranscriptEntry, User } from '../types';
 import { RobotIcon, VolumeUpIcon, XIcon, MicrophoneIcon, ScreenShareIcon, ExclamationTriangleIcon } from './icons';
 
 interface MediaStreams {
@@ -12,10 +11,11 @@ interface MediaStreams {
 }
 interface LiveInterviewScreenProps {
     mediaStreams: MediaStreams | null;
-    onEndInterview: (transcript: TranscriptEntry[], code: string) => void;
+    onEndInterview: (transcript: TranscriptEntry[], code: string, videoUrl: string) => void;
     jobDescription: string;
     resumeText: string;
     onRestart: () => void;
+    currentUser: User | null;
 }
 
 type AiStatus = "Idle" | "Listening" | "Thinking" | "Speaking";
@@ -94,7 +94,7 @@ const ProctoringWarning: React.FC<{ text: string }> = ({ text }) => (
 );
 
 
-const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams, onEndInterview, jobDescription, resumeText, onRestart }) => {
+const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams, onEndInterview, jobDescription, resumeText, onRestart, currentUser }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const webcamCanvasRef = useRef<HTMLCanvasElement>(null);
     
@@ -107,6 +107,9 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
     const proctoringIntervalRef = useRef<number | null>(null);
     const proctoringAudioIntervalRef = useRef<number | null>(null);
     const speechDetectionTimeoutRef = useRef<number | null>(null);
+
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const recordedChunksRef = useRef<globalThis.Blob[]>([]);
 
 
     const [questionCount, setQuestionCount] = useState(1);
@@ -239,6 +242,24 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
         if (videoRef.current && mediaStreams?.camera) videoRef.current.srcObject = mediaStreams.camera;
         
         if (mediaStreams?.camera) {
+            // Start video recording
+            try {
+                recordedChunksRef.current = [];
+                const recorder = new MediaRecorder(mediaStreams.camera, { mimeType: 'video/webm' });
+                mediaRecorderRef.current = recorder;
+                
+                recorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        recordedChunksRef.current.push(event.data);
+                    }
+                };
+                
+                recorder.start();
+                console.log("Recording started.");
+            } catch (e) {
+                console.error("Error starting MediaRecorder:", e);
+            }
+
             proctoringIntervalRef.current = window.setInterval(runProctoringCheck, 15000);
             
             const systemInstruction = `${LIVE_INTERVIEWER_PERSONA}\n\n---JOB DESCRIPTION---\n${jobDescription}\n\n---RESUME---\n${resumeText}`;
@@ -303,7 +324,7 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
                             setTranscript(prev => {
                                 const last = prev[prev.length - 1];
                                 if (last?.speaker === 'user') return [...prev.slice(0, -1), { ...last, text: last.text + text }];
-                                return [...prev, { speaker: 'user', text }];
+                                return [...prev, { speaker: 'user', text, timestamp: videoRef.current?.currentTime }];
                             });
                         }
                         if (message.serverContent?.outputTranscription) {
@@ -313,7 +334,7 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
                              setTranscript(prev => {
                                 const last = prev[prev.length - 1];
                                 if (last?.speaker === 'ai') return [...prev.slice(0, -1), { ...last, text: last.text + text }];
-                                return [...prev, { speaker: 'ai', text }];
+                                return [...prev, { speaker: 'ai', text, timestamp: videoRef.current?.currentTime }];
                             });
                         }
                         if (message.serverContent?.turnComplete) {
@@ -349,9 +370,24 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
         return () => cleanup();
     }, [mediaStreams, jobDescription, resumeText, volume, cleanup, runProctoringCheck, isTerminated]);
 
-    const handleEnd = () => {
+    const handleEnd = async () => {
+        const videoPromise = new Promise<string>((resolve) => {
+            if (!mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') {
+                resolve('');
+                return;
+            }
+            mediaRecorderRef.current.onstop = () => {
+                const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                console.log("Recording stopped. URL:", url);
+                resolve(url);
+            };
+            mediaRecorderRef.current.stop();
+        });
+
+        const videoUrl = await videoPromise;
         cleanup();
-        onEndInterview(transcript, code);
+        onEndInterview(transcript, code, videoUrl);
     };
 
     if (isTerminated) {
@@ -366,7 +402,7 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
             {/* Header */}
              <header className="relative flex-shrink-0 flex items-center h-8">
                 <div className="flex-1">
-                    <h2 className="text-lg font-bold text-slate-200">Live Interview - Question {questionCount} of ~5</h2>
+                    <h2 className="text-lg font-bold text-slate-200">Live Interview for {currentUser?.name || 'Candidate'} - Question {questionCount} of ~5</h2>
                 </div>
                 <div className="absolute left-1/2 -translate-x-1/2">
                     <button onClick={onRestart} className="text-slate-500 hover:text-white transition-colors">
@@ -391,6 +427,10 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
                             <div className="flex items-center gap-2 bg-black/50 text-white px-3 py-1 rounded-md text-sm font-semibold animate-pulse-live backdrop-blur-sm border border-white/20">
                                 <span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span></span>
                                 LIVE
+                            </div>
+                             <div className="flex items-center gap-2 bg-black/50 text-white px-3 py-1 rounded-md text-sm font-semibold backdrop-blur-sm border border-white/20">
+                                <span className="relative flex h-3 w-3"><span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span></span>
+                                RECORDING
                             </div>
                             {mediaStreams?.screen && (
                                 <div className="flex items-center gap-2 bg-black/50 text-sky-300 px-3 py-1 rounded-md text-sm font-semibold backdrop-blur-sm border border-white/20">
