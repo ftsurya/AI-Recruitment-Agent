@@ -123,7 +123,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
            {/* Template Loader */}
            {templates.length > 0 && (
                 <div className="mb-6">
-                    <label htmlFor="template-select" className="block text-sm font-medium text-slate-300 mb-1">Load from Template</label>
+                    <label htmlFor="template-select" className="block text-sm font-medium text-slate-300 mb-1">JOB TITLE</label>
                     <select
                         id="template-select"
                         onChange={handleTemplateSelect}

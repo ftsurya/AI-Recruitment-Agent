@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { GoogleGenAI, LiveServerMessage, Modality, Blob } from "@google/genai";
+import { GoogleGenAI, LiveServerMessage, Modality } from "@google/genai";
 import { aiRecruiterService } from '../services/geminiService';
 import { LIVE_INTERVIEWER_PERSONA } from '../constants';
 import { TranscriptEntry, User } from '../types';
@@ -283,7 +283,8 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
 
                         scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
                             const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
-                            const pcmBlob: Blob = {
+                            // FIX: Removed explicit Blob type annotation to avoid conflict with native Blob type.
+                            const pcmBlob = {
                                 data: encode(new Uint8Array(new Int16Array(inputData.map(f => f * 32768)).buffer)),
                                 mimeType: 'audio/pcm;rate=16000',
                             };
@@ -371,20 +372,40 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
     }, [mediaStreams, jobDescription, resumeText, volume, cleanup, runProctoringCheck, isTerminated]);
 
     const handleEnd = async () => {
+        // Converts a Blob to a base64 data URL for persistent storage
+        // FIX: Changed blob parameter type to globalThis.Blob to match the native Blob type expected by FileReader.
+        const blobToDataUrl = (blob: globalThis.Blob) => new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    
         const videoPromise = new Promise<string>((resolve) => {
-            if (!mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') {
-                resolve('');
+            if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== 'recording') {
+                resolve(''); // Not recording, so no URL to return
                 return;
             }
-            mediaRecorderRef.current.onstop = () => {
-                const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
-                const url = URL.createObjectURL(blob);
-                console.log("Recording stopped. URL:", url);
-                resolve(url);
+    
+            mediaRecorderRef.current.onstop = async () => {
+                const videoBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+                if (videoBlob.size === 0) {
+                    resolve(''); // No data was recorded
+                    return;
+                }
+                try {
+                    const dataUrl = await blobToDataUrl(videoBlob);
+                    console.log("Recording stopped. Data URL generated for persistent storage.");
+                    resolve(dataUrl);
+                } catch (error) {
+                    console.error("Error converting recorded video to data URL:", error);
+                    resolve(''); // Resolve with empty string on error
+                }
             };
+    
             mediaRecorderRef.current.stop();
         });
-
+    
         const videoUrl = await videoPromise;
         cleanup();
         onEndInterview(transcript, code, videoUrl);
