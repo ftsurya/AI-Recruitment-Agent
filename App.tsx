@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useRef } from 'react';
 import { ViewState, InterviewType, ChatMessage, FinalReport, HistoricalInterviewRecord, CandidateStatus, TranscriptEntry } from './types';
 import { aiRecruiterService } from './services/geminiService';
@@ -254,17 +255,25 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         </div>
 
         {/* Social Login Buttons */}
-        <div className={`transition-opacity duration-500 ${selectedRole ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
-          <div className="grid grid-cols-1 gap-4">
+        <div className="h-14 flex items-center justify-center">
+          {selectedRole === 'Candidate' && (
             <button
               onClick={handleLogin}
-              disabled={!selectedRole}
-              className="w-full flex items-center justify-center gap-3 bg-slate-800 text-white font-semibold py-3 rounded-lg hover:bg-slate-700 transition-colors border border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-3 bg-slate-800 text-white font-semibold py-3 rounded-lg hover:bg-slate-700 transition-colors border border-slate-700 animate-fade-in"
             >
               <MicrosoftIcon className="w-5 h-5" />
-              Login with Microsoft
+              Login as Candidate with Microsoft (ID 1)
             </button>
-          </div>
+          )}
+          {selectedRole === 'HR' && (
+            <button
+              onClick={handleLogin}
+              className="w-full flex items-center justify-center gap-3 bg-slate-800 text-white font-semibold py-3 rounded-lg hover:bg-slate-700 transition-colors border border-slate-700 animate-fade-in"
+            >
+              <MicrosoftIcon className="w-5 h-5" />
+              Login as HR Professional with Microsoft (ID 2)
+            </button>
+          )}
         </div>
       </div>
     </div>
