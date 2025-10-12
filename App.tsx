@@ -48,7 +48,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
   
   return (
     <div className="w-full bg-transparent text-white">
-      <header className="sticky top-0 bg-[#0f172a]/80 backdrop-blur-sm p-6 z-10">
+      <header className="sticky top-0 bg-slate-900/50 backdrop-blur-xl border-b border-white/10 p-6 z-10">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
             <LandingMicrophoneIcon className="w-8 h-8 text-blue-400" />
@@ -61,7 +61,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
           </nav>
           <button
             onClick={onLoginClick}
-            className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+            className="bg-blue-600/30 backdrop-blur-md border border-blue-400/50 hover:bg-blue-600/50 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
           >
             Login
           </button>
@@ -69,7 +69,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
       </header>
       <main>
         {/* Hero Section */}
-        <section className="min-h-[calc(100vh-88px)] flex items-center justify-center relative">
+        <section className="min-h-[calc(100vh-104px)] flex items-center justify-center relative">
             <div className="container mx-auto text-center px-4 animate-fade-in">
               <h1 className="text-4xl md:text-6xl font-extrabold mb-4">
                 The Future of Hiring is Here.
@@ -81,37 +81,37 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="py-20 bg-slate-900/50">
+        <section id="features" className="py-20 bg-transparent">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Powerful Features for Smarter Hiring</h2>
             <p className="text-slate-400 mb-12 max-w-2xl mx-auto">Everything you need to automate and enhance your recruitment process, from start to finish.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div className="p-8 bg-slate-800/40 rounded-xl border border-white/10 flex flex-col items-center animate-slide-in-up">
+              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up">
                 <div className="bg-blue-500/20 p-4 rounded-full mb-6"><ChatBubbleLeftRightIcon className="w-10 h-10 text-blue-300"/></div>
                 <h3 className="text-xl font-semibold mb-2">AI-Powered Interviews</h3>
                 <p className="text-slate-400 text-center">Conducts both dynamic text-based chats and realistic live voice interviews to engage candidates effectively.</p>
               </div>
-              <div className="p-8 bg-slate-800/40 rounded-xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.1s' }}>
+              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.1s' }}>
                 <div className="bg-blue-500/20 p-4 rounded-full mb-6"><DocumentTextIcon className="w-10 h-10 text-blue-300"/></div>
                 <h3 className="text-xl font-semibold mb-2">Adaptive Questioning</h3>
                 <p className="text-slate-400 text-center">Intelligently generates questions based on the job description and candidate's resume for a tailored assessment.</p>
               </div>
-              <div className="p-8 bg-slate-800/40 rounded-xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.2s' }}>
+              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.2s' }}>
                 <div className="bg-blue-500/20 p-4 rounded-full mb-6"><GaugeIcon className="w-10 h-10 text-blue-300"/></div>
                 <h3 className="text-xl font-semibold mb-2">Real-time Evaluation</h3>
                 <p className="text-slate-400 text-center">Analyzes candidate responses in real-time, providing instant scoring and constructive feedback.</p>
               </div>
-              <div className="p-8 bg-slate-800/40 rounded-xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.3s' }}>
+              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.3s' }}>
                 <div className="bg-blue-500/20 p-4 rounded-full mb-6"><ChartBarIcon className="w-10 h-10 text-blue-300"/></div>
                 <h3 className="text-xl font-semibold mb-2">In-depth Reporting</h3>
                 <p className="text-slate-400 text-center">Generates comprehensive reports with overall scores, strength/weakness analysis, and salary suggestions.</p>
               </div>
-              <div className="p-8 bg-slate-800/40 rounded-xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.4s' }}>
+              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.4s' }}>
                 <div className="bg-blue-500/20 p-4 rounded-full mb-6"><ShieldCheckIcon className="w-10 h-10 text-blue-300"/></div>
                 <h3 className="text-xl font-semibold mb-2">Interview Integrity</h3>
                 <p className="text-slate-400 text-center">Employs advanced AI proctoring to monitor for cheating, ensuring a fair and authentic evaluation process.</p>
               </div>
-              <div className="p-8 bg-slate-800/40 rounded-xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.5s' }}>
+              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.5s' }}>
                 <div className="bg-blue-500/20 p-4 rounded-full mb-6"><CodeBracketIcon className="w-10 h-10 text-blue-300"/></div>
                 <h3 className="text-xl font-semibold mb-2">Interactive Coding Challenges</h3>
                 <p className="text-slate-400 text-center">Includes a fully-functional Python IDE for assessing technical skills with hands-on coding exercises.</p>
@@ -121,31 +121,31 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
         </section>
 
         {/* How It Works Section */}
-        <section id="how-it-works" className="py-20 bg-transparent">
+        <section id="how-it-works" className="py-20 bg-slate-900/30">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
             <p className="text-slate-400 mb-12 max-w-2xl mx-auto">A simple four-step process to streamline your recruitment.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {/* Step 1 */}
-              <div className="p-8 bg-slate-800/40 rounded-xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.1s' }}>
+              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.1s' }}>
                 <div className="bg-blue-500/20 p-4 rounded-full mb-6"><DocumentTextIcon className="w-10 h-10 text-blue-300"/></div>
                 <h3 className="text-xl font-semibold mb-2">1. Provide Details</h3>
                 <p className="text-slate-400 text-center">Upload the job description and candidate's resume to provide context for the AI.</p>
               </div>
               {/* Step 2 */}
-              <div className="p-8 bg-slate-800/40 rounded-xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.2s' }}>
+              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.2s' }}>
                 <div className="bg-blue-500/20 p-4 rounded-full mb-6"><ChatBubbleLeftRightIcon className="w-10 h-10 text-blue-300"/></div>
                 <h3 className="text-xl font-semibold mb-2">2. AI Conducts Interview</h3>
                 <p className="text-slate-400 text-center">Our AI engages the candidate in a comprehensive text or voice-based interview.</p>
               </div>
               {/* Step 3 */}
-              <div className="p-8 bg-slate-800/40 rounded-xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.3s' }}>
+              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.3s' }}>
                 <div className="bg-blue-500/20 p-4 rounded-full mb-6"><ChartBarIcon className="w-10 h-10 text-blue-300"/></div>
                 <h3 className="text-xl font-semibold mb-2">3. Get Instant Report</h3>
                 <p className="text-slate-400 text-center">Receive a detailed analysis of skills, performance, and salary recommendations.</p>
               </div>
                {/* Step 4 */}
-              <div className="p-8 bg-slate-800/40 rounded-xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.4s' }}>
+              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.4s' }}>
                 <div className="bg-blue-500/20 p-4 rounded-full mb-6"><ShieldCheckIcon className="w-10 h-10 text-blue-300"/></div>
                 <h3 className="text-xl font-semibold mb-2">4. Ensure Integrity</h3>
                 <p className="text-slate-400 text-center">Built-in proctoring ensures response authenticity and fair evaluation for all candidates.</p>
@@ -155,12 +155,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
         </section>
         
         {/* Preparation Guide Section */}
-        <section id="prepare" className="py-20 bg-slate-900/50">
+        <section id="prepare" className="py-20 bg-transparent">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Preparing for Your Interview</h2>
             <p className="text-slate-400 mb-12 max-w-2xl mx-auto">Follow these guidelines to ensure a smooth and successful AI-powered interview experience.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
-              <div className="p-8 bg-slate-800/40 rounded-xl border border-white/10 flex flex-col animate-slide-in-up" style={{ animationDelay: '0.1s' }}>
+              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col animate-slide-in-up" style={{ animationDelay: '0.1s' }}>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="bg-blue-500/20 p-3 rounded-full"><ComputerDesktopIcon className="w-8 h-8 text-blue-300"/></div>
                   <h3 className="text-xl font-semibold">Your Environment</h3>
@@ -172,7 +172,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
                   <li>Close all unnecessary applications and browser tabs.</li>
                 </ul>
               </div>
-              <div className="p-8 bg-slate-800/40 rounded-xl border border-white/10 flex flex-col animate-slide-in-up" style={{ animationDelay: '0.2s' }}>
+              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col animate-slide-in-up" style={{ animationDelay: '0.2s' }}>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="bg-blue-500/20 p-3 rounded-full"><BeakerIcon className="w-8 h-8 text-blue-300"/></div>
                   <h3 className="text-xl font-semibold">Your Approach</h3>
@@ -184,7 +184,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
                   <li>Listen carefully to the AI's questions and answer thoughtfully.</li>
                 </ul>
               </div>
-              <div className="p-8 bg-slate-800/40 rounded-xl border border-white/10 flex flex-col animate-slide-in-up" style={{ animationDelay: '0.3s' }}>
+              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col animate-slide-in-up" style={{ animationDelay: '0.3s' }}>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="bg-blue-500/20 p-3 rounded-full"><ShieldCheckIcon className="w-8 h-8 text-blue-300"/></div>
                   <h3 className="text-xl font-semibold">Interview Integrity</h3>
@@ -240,16 +240,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-8">
           <button
             onClick={() => setSelectedRole('Candidate')}
-            className={`group bg-slate-800/50 hover:bg-slate-700/60 border rounded-xl p-6 text-left transition-all duration-300 flex items-center gap-4
-              ${selectedRole === 'Candidate' ? 'border-blue-500 ring-2 ring-blue-500/50' : 'border-slate-700'}`}
+            className={`group bg-white/5 backdrop-blur-lg hover:bg-white/10 border rounded-2xl p-6 text-left transition-all duration-300 flex items-center gap-4
+              ${selectedRole === 'Candidate' ? 'border-blue-400 ring-2 ring-blue-400/50' : 'border-white/10'}`}
           >
             <UserCircleIcon className="w-8 h-8 text-slate-400 group-hover:text-blue-400 transition-colors" />
             <div><h2 className="text-lg font-semibold text-slate-100">I'm a Candidate</h2></div>
           </button>
           <button
             onClick={() => setSelectedRole('HR')}
-            className={`group bg-slate-800/50 hover:bg-slate-700/60 border rounded-xl p-6 text-left transition-all duration-300 flex items-center gap-4
-              ${selectedRole === 'HR' ? 'border-blue-500 ring-2 ring-blue-500/50' : 'border-slate-700'}`}
+            className={`group bg-white/5 backdrop-blur-lg hover:bg-white/10 border rounded-2xl p-6 text-left transition-all duration-300 flex items-center gap-4
+              ${selectedRole === 'HR' ? 'border-blue-400 ring-2 ring-blue-400/50' : 'border-white/10'}`}
           >
             <BuildingOfficeIcon className="w-8 h-8 text-slate-400 group-hover:text-blue-400 transition-colors" />
             <div><h2 className="text-lg font-semibold text-slate-100">I'm an HR Professional</h2></div>
@@ -261,7 +261,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           {selectedRole === 'Candidate' && (
             <button
               onClick={handleLogin}
-              className="w-full flex items-center justify-center gap-3 bg-slate-800 text-white font-semibold py-3 rounded-lg hover:bg-slate-700 transition-colors border border-slate-700 animate-fade-in"
+              className="w-full flex items-center justify-center gap-3 bg-white/10 backdrop-blur-md text-white font-semibold py-3 rounded-lg hover:bg-white/20 transition-colors border border-white/20 animate-fade-in"
             >
               <MicrosoftIcon className="w-5 h-5" />
               Login as Candidate with Microsoft (ID 1)
@@ -270,7 +270,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           {selectedRole === 'HR' && (
             <button
               onClick={handleLogin}
-              className="w-full flex items-center justify-center gap-3 bg-slate-800 text-white font-semibold py-3 rounded-lg hover:bg-slate-700 transition-colors border border-slate-700 animate-fade-in"
+              className="w-full flex items-center justify-center gap-3 bg-white/10 backdrop-blur-md text-white font-semibold py-3 rounded-lg hover:bg-white/20 transition-colors border border-white/20 animate-fade-in"
             >
               <MicrosoftIcon className="w-5 h-5" />
               Login as HR Professional with Microsoft (ID 2)

@@ -11,7 +11,7 @@ type HrTab = 'list' | 'analytics' | 'templates';
 
 // --- Reusable UI Elements for Modals ---
 const InfoCard: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-    <div className="bg-slate-900/50 border border-slate-700 p-4 rounded-lg">
+    <div className="bg-black/20 backdrop-blur-lg border border-white/10 p-4 rounded-xl">
         <h3 className="text-lg font-semibold text-blue-300 mb-3">{title}</h3>
         <div className="text-slate-300 text-sm">{children}</div>
     </div>
@@ -83,8 +83,8 @@ const VideoPlaybackModal: React.FC<{ record: HistoricalInterviewRecord, onClose:
     
     return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fade-in" onClick={onClose}>
-            <div className="bg-slate-800 border border-slate-700 rounded-2xl max-w-6xl w-full h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-                 <div className="p-4 border-b border-slate-700 flex justify-between items-center flex-shrink-0">
+            <div className="bg-slate-900/70 backdrop-blur-2xl border border-white/10 rounded-2xl max-w-6xl w-full h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                 <div className="p-4 border-b border-white/10 flex justify-between items-center flex-shrink-0">
                     <div>
                         <h2 className="text-xl font-bold">Interview Recording: {record.candidateName}</h2>
                         <p className="text-sm text-slate-400">{record.jobTitle}</p>
@@ -105,8 +105,8 @@ const VideoPlaybackModal: React.FC<{ record: HistoricalInterviewRecord, onClose:
                             <div className="w-full h-full flex items-center justify-center text-slate-500">Video not available.</div>
                         )}
                     </div>
-                    <div className="w-full md:w-1/3 flex flex-col bg-slate-900/50 rounded-lg border border-slate-700">
-                        <h3 className="text-lg font-semibold p-3 border-b border-slate-700 flex-shrink-0">Transcript</h3>
+                    <div className="w-full md:w-1/3 flex flex-col bg-black/20 backdrop-blur-xl rounded-lg border border-white/10">
+                        <h3 className="text-lg font-semibold p-3 border-b border-white/10 flex-shrink-0">Transcript</h3>
                         <div ref={transcriptContainerRef} className="flex-1 p-3 space-y-3 overflow-y-auto custom-scrollbar">
                            {(record.transcript || []).map((entry, index) => (
                                <div key={index} className={`p-2 rounded-lg transition-colors duration-300 ${activeTranscriptIndex === index ? 'bg-blue-500/20' : ''}`}>
@@ -135,8 +135,8 @@ const CandidateProfileModal: React.FC<{ record: HistoricalInterviewRecord, onClo
 
     return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fade-in" onClick={onClose}>
-            <div className="bg-slate-800 border border-slate-700 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-                <div className="p-4 border-b border-slate-700 flex justify-between items-center flex-shrink-0">
+            <div className="bg-slate-900/70 backdrop-blur-2xl border border-white/10 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="p-4 border-b border-white/10 flex justify-between items-center flex-shrink-0">
                     <div>
                         <h2 className="text-xl font-bold">Candidate Profile: {record.candidateName || record.resumeFileName}</h2>
                         <p className="text-sm text-slate-400">{record.jobTitle}</p>
@@ -145,12 +145,12 @@ const CandidateProfileModal: React.FC<{ record: HistoricalInterviewRecord, onClo
                 </div>
                 <div className="overflow-auto custom-scrollbar p-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                        <div className="md:col-span-2 bg-slate-900/50 border border-slate-700 p-6 rounded-xl flex flex-col justify-center items-center text-center">
+                        <div className="md:col-span-2 bg-black/20 backdrop-blur-lg border border-white/10 p-6 rounded-xl flex flex-col justify-center items-center text-center">
                             <h2 className="text-xl font-bold mb-2">Overall Score</h2>
                             <p className="text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-3">{feedback.overall_score}</p>
                             <StarRating rating={feedback.star_rating} size="md" />
                         </div>
-                        <div className="bg-slate-900/50 border border-slate-700 p-6 rounded-xl flex flex-col justify-center text-center">
+                        <div className="bg-black/20 backdrop-blur-lg border border-white/10 p-6 rounded-xl flex flex-col justify-center text-center">
                             <h2 className="text-md font-semibold text-slate-300 mb-2">Recommendation</h2>
                             <p className={`text-xl font-bold ${recommendationColor}`}>{feedback.final_recommendation}</p>
                             <p className="text-xs text-slate-400 mt-2">Experience: {feedback.inferred_experience_level}</p>
@@ -210,14 +210,14 @@ const ComparisonModal: React.FC<{ candidates: HistoricalInterviewRecord[], onClo
 
     return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fade-in" onClick={onClose}>
-            <div className="bg-slate-800 border border-slate-700 rounded-2xl max-w-6xl w-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-                <div className="p-4 border-b border-slate-700 flex justify-between items-center">
+            <div className="bg-slate-900/70 backdrop-blur-2xl border border-white/10 rounded-2xl max-w-6xl w-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="p-4 border-b border-white/10 flex justify-between items-center">
                     <h2 className="text-xl font-bold">Candidate Comparison</h2>
                     <button onClick={onClose}><XIcon className="w-6 h-6 text-slate-400 hover:text-white" /></button>
                 </div>
                 <div className="overflow-auto custom-scrollbar">
                     <table className="w-full text-left">
-                        <thead className="bg-slate-900 sticky top-0">
+                        <thead className="bg-black/30 backdrop-blur-md sticky top-0">
                             <tr>
                                 <th className="p-3 font-semibold text-slate-300 w-1/5">Metric</th>
                                 {candidates.map(c => (
@@ -225,7 +225,7 @@ const ComparisonModal: React.FC<{ candidates: HistoricalInterviewRecord[], onClo
                                 ))}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-700">
+                        <tbody className="divide-y divide-white/10">
                             {fields.map(field => (
                                 <tr key={field.key}>
                                     <td className="p-3 font-medium text-slate-400">{field.label}</td>
@@ -235,7 +235,7 @@ const ComparisonModal: React.FC<{ candidates: HistoricalInterviewRecord[], onClo
                                             <td key={c.id} className="p-3 align-top text-sm">
                                                 {field.key === 'star_rating' ? <StarRating rating={value as number} size="sm" />
                                                  : Array.isArray(value) ? 
-                                                    <div className="flex flex-wrap gap-1">{value.map((v, i) => <span key={i} className="bg-slate-700 px-2 py-0.5 rounded text-xs">{v}</span>)}</div>
+                                                    <div className="flex flex-wrap gap-1">{value.map((v, i) => <span key={i} className="bg-white/10 px-2 py-0.5 rounded text-xs">{v}</span>)}</div>
                                                  : String(value)}
                                             </td>
                                         );
@@ -289,8 +289,8 @@ const CommunicationModal: React.FC<{ candidate: HistoricalInterviewRecord, onClo
 
     return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fade-in" onClick={onClose}>
-            <div className="bg-slate-800 border border-slate-700 rounded-2xl max-w-2xl w-full flex flex-col" onClick={e => e.stopPropagation()}>
-                <div className="p-4 border-b border-slate-700 flex justify-between items-center">
+            <div className="bg-slate-900/70 backdrop-blur-2xl border border-white/10 rounded-2xl max-w-2xl w-full flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="p-4 border-b border-white/10 flex justify-between items-center">
                     <h2 className="text-xl font-bold">Communicate with Candidate</h2>
                     <button onClick={onClose}><XIcon className="w-6 h-6 text-slate-400 hover:text-white" /></button>
                 </div>
@@ -300,21 +300,21 @@ const CommunicationModal: React.FC<{ candidate: HistoricalInterviewRecord, onClo
                         {candidate.candidateEmail && <p className="text-sm text-slate-400"><strong>Email:</strong> {candidate.candidateEmail}</p>}
                     </div>
                     <div className="flex gap-4">
-                        <button onClick={() => handleGenerateEmail('NEXT_STEPS')} className="flex-1 bg-green-600 hover:bg-green-500 rounded-md px-4 py-2 font-semibold transition-colors">Generate 'Next Steps' Email</button>
-                        <button onClick={() => handleGenerateEmail('REJECTION')} className="flex-1 bg-red-600 hover:bg-red-500 rounded-md px-4 py-2 font-semibold transition-colors">Generate 'Rejection' Email</button>
+                        <button onClick={() => handleGenerateEmail('NEXT_STEPS')} className="flex-1 bg-green-600/50 border border-green-500 hover:bg-green-600/70 rounded-md px-4 py-2 font-semibold transition-colors">Generate 'Next Steps' Email</button>
+                        <button onClick={() => handleGenerateEmail('REJECTION')} className="flex-1 bg-red-600/50 border border-red-500 hover:bg-red-600/70 rounded-md px-4 py-2 font-semibold transition-colors">Generate 'Rejection' Email</button>
                     </div>
                     {isLoading && <div className="flex justify-center p-4"><Spinner /></div>}
                     {generatedEmail && (
                         <div className="space-y-2 animate-fade-in">
-                            <input type="text" value={generatedEmail.subject} readOnly className="w-full bg-slate-700 p-2 rounded-md border border-slate-600" />
-                            <textarea value={generatedEmail.body} readOnly rows={10} className="w-full bg-slate-700 p-2 rounded-md border border-slate-600 custom-scrollbar" />
+                            <input type="text" value={generatedEmail.subject} readOnly className="w-full bg-black/30 p-2 rounded-md border border-slate-600" />
+                            <textarea value={generatedEmail.body} readOnly rows={10} className="w-full bg-black/30 p-2 rounded-md border border-slate-600 custom-scrollbar" />
                             <div className="flex items-center justify-end gap-3 pt-2">
-                                <button onClick={handleCopy} className="relative flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-300 bg-slate-700/60 border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors">
+                                <button onClick={handleCopy} className="relative flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-300 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 transition-colors">
                                     <ClipboardDocumentListIcon className="w-4 h-4" />
                                     {copySuccess ? 'Copied!' : 'Copy'}
                                 </button>
                                 {mailtoLink ? (
-                                    <a href={mailtoLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors">
+                                    <a href={mailtoLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600/70 border border-blue-500 rounded-lg hover:bg-blue-600 transition-colors">
                                         <EnvelopeIcon className="w-4 h-4" />
                                         Send via Email Client
                                     </a>
@@ -336,7 +336,7 @@ const CommunicationModal: React.FC<{ candidate: HistoricalInterviewRecord, onClo
 
 // --- Analytics Sub-Components ---
 const StatCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode }> = ({ title, value, icon }) => (
-    <div className="bg-slate-900/50 border border-slate-700 p-6 rounded-xl flex items-center gap-4">
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-2xl flex items-center gap-4">
         <div className="bg-blue-500/20 p-3 rounded-full">
             {icon}
         </div>
@@ -360,7 +360,7 @@ const ScoreDistributionChart: React.FC<{ scores: number[] }> = ({ scores }) => {
     const maxCount = Math.max(...scoreBuckets, 1);
 
     return (
-        <div className="bg-slate-900/50 border border-slate-700 p-6 rounded-xl">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-2xl">
             <h3 className="text-lg font-semibold text-slate-100 mb-4">Score Distribution</h3>
             <div className="flex justify-between items-end h-64 gap-2 pt-4">
                 {scoreBuckets.map((count, index) => (
@@ -401,7 +401,7 @@ const StatusDistributionChart: React.FC<{ records: HistoricalInterviewRecord[] }
     let accumulatedOffset = 0;
 
     return (
-        <div className="bg-slate-900/50 border border-slate-700 p-6 rounded-xl">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-2xl">
             <h3 className="text-lg font-semibold text-slate-100 mb-4">Candidate Status Breakdown</h3>
             <div className="flex items-center gap-8">
                 <div className="relative">
@@ -462,7 +462,7 @@ const CommonKeywordsList: React.FC<{ records: HistoricalInterviewRecord[]; type:
     }, [records, type]);
 
     return (
-        <div className="bg-slate-900/50 border border-slate-700 p-6 rounded-xl">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-2xl">
             <h3 className="text-lg font-semibold text-slate-100 mb-4 capitalize">Top 5 Candidate {type}</h3>
             {keywords.length > 0 ? (
                 <ul className="space-y-2">
@@ -508,7 +508,7 @@ const AnalyticsView: React.FC<{ records: HistoricalInterviewRecord[] }> = ({ rec
         return (
             <div className="p-8 animate-fade-in">
                 <h2 className="text-2xl font-bold text-slate-100 mb-4">Interview Analytics</h2>
-                <div className="text-center text-slate-500 p-16 bg-slate-900/50 rounded-lg border border-slate-700">
+                <div className="text-center text-slate-500 p-16 bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg">
                     <p>No interview data available yet.</p>
                     <p className="text-sm mt-2">Complete some interviews to see analytics here.</p>
                 </div>
@@ -577,8 +577,8 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({ isOpen, onClose, 
 
     return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fade-in" onClick={onClose}>
-            <div className="bg-slate-800 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-                <div className="p-4 border-b border-slate-700 flex justify-between items-center">
+            <div className="bg-slate-900/70 backdrop-blur-2xl border border-white/10 rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="p-4 border-b border-white/10 flex justify-between items-center">
                     <h2 className="text-xl font-bold">{initialData ? 'Edit Template' : 'Create New Template'}</h2>
                     <button onClick={onClose}><XIcon className="w-6 h-6 text-slate-400 hover:text-white" /></button>
                 </div>
@@ -586,16 +586,16 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({ isOpen, onClose, 
                      {Object.entries({name: "Template Name", companyName: "Company Name", jobTitle: "Job Title"}).map(([key, label]) => (
                         <div key={key}>
                             <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
-                            <input type="text" name={key} value={(formData as any)[key]} onChange={handleChange} required className="w-full bg-slate-700 p-2 rounded-md border border-slate-600 focus:ring-blue-500 focus:border-blue-500" />
+                            <input type="text" name={key} value={(formData as any)[key]} onChange={handleChange} required className="w-full bg-black/30 p-2 rounded-md border border-slate-600 focus:ring-blue-500 focus:border-blue-500" />
                         </div>
                     ))}
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-1">Job Description</label>
-                        <textarea name="jobDescription" value={formData.jobDescription} onChange={handleChange} rows={6} required className="w-full bg-slate-700 p-2 rounded-md border border-slate-600 custom-scrollbar focus:ring-blue-500 focus:border-blue-500" />
+                        <textarea name="jobDescription" value={formData.jobDescription} onChange={handleChange} rows={6} required className="w-full bg-black/30 p-2 rounded-md border border-slate-600 custom-scrollbar focus:ring-blue-500 focus:border-blue-500" />
                     </div>
                     <div className="pt-4 flex justify-end gap-3">
-                        <button type="button" onClick={onClose} className="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded-md font-semibold transition-colors">Cancel</button>
-                        <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-md font-semibold transition-colors">Save Template</button>
+                        <button type="button" onClick={onClose} className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 rounded-md font-semibold transition-colors">Cancel</button>
+                        <button type="submit" className="px-4 py-2 bg-blue-600/70 border border-blue-500 hover:bg-blue-600 rounded-md font-semibold transition-colors">Save Template</button>
                     </div>
                 </form>
             </div>
@@ -642,25 +642,25 @@ const TemplatesManager: React.FC<TemplatesManagerProps> = ({ templates, onAddTem
             />
             <div className="flex justify-between items-center mb-6">
                  <h2 className="text-2xl font-bold text-slate-100">Interview Templates</h2>
-                 <button onClick={handleOpenCreate} className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg text-sm hover:bg-blue-500 transition-colors">Create New Template</button>
+                 <button onClick={handleOpenCreate} className="px-4 py-2 bg-blue-600/70 border border-blue-500 text-white font-semibold rounded-lg text-sm hover:bg-blue-600 transition-colors">Create New Template</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {templates.map(template => (
-                    <div key={template.id} className="bg-slate-900/50 border border-slate-700 rounded-lg p-5 flex flex-col justify-between">
+                    <div key={template.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-5 flex flex-col justify-between">
                         <div>
                             <h3 className="font-bold text-lg text-slate-100">{template.name}</h3>
                             <p className="text-sm text-blue-300">{template.jobTitle}</p>
                             <p className="text-xs text-slate-400 mt-1">{template.companyName}</p>
                         </div>
                         <div className="mt-4 flex justify-end gap-2">
-                            <button onClick={() => handleOpenEdit(template)} className="px-3 py-1 text-xs font-medium bg-slate-700 hover:bg-slate-600 rounded-md">Edit</button>
+                            <button onClick={() => handleOpenEdit(template)} className="px-3 py-1 text-xs font-medium bg-white/10 hover:bg-white/20 rounded-md">Edit</button>
                             <button onClick={() => onDeleteTemplate(template.id)} className="px-3 py-1 text-xs font-medium bg-red-800/70 hover:bg-red-700/80 text-red-200 rounded-md">Delete</button>
                         </div>
                     </div>
                 ))}
             </div>
             {templates.length === 0 && (
-                 <div className="text-center text-slate-500 p-16 bg-slate-900/50 rounded-lg border border-slate-700">
+                 <div className="text-center text-slate-500 p-16 bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg">
                     <p>No templates created yet.</p>
                     <p className="text-sm mt-2">Click 'Create New Template' to get started.</p>
                 </div>
@@ -712,7 +712,7 @@ const EditableNoteCell: React.FC<{
                 onChange={(e) => setNote(e.target.value)}
                 onBlur={handleSave}
                 onKeyDown={handleKeyDown}
-                className="w-full h-24 p-2 bg-slate-900 border border-blue-500 rounded-md focus:outline-none resize-none text-sm"
+                className="w-full h-24 p-2 bg-slate-900/70 backdrop-blur-sm border border-blue-500 rounded-md focus:outline-none resize-none text-sm"
                 aria-label="Edit notes"
             />
         );
@@ -721,7 +721,7 @@ const EditableNoteCell: React.FC<{
     return (
         <div 
             onClick={() => setIsEditing(true)} 
-            className="w-full min-h-[4rem] text-sm text-slate-400 hover:bg-slate-800/50 p-2 rounded-md cursor-pointer transition-colors"
+            className="w-full min-h-[4rem] text-sm text-slate-400 hover:bg-white/5 p-2 rounded-md cursor-pointer transition-colors"
             title="Click to edit note"
         >
             {note || <span className="text-slate-500">Click to add a note...</span>}
@@ -747,9 +747,9 @@ const CandidateRow: React.FC<{
     };
 
     return (
-        <tr className={`border-b border-slate-700 transition-colors ${isSelected ? 'bg-slate-700/50' : 'hover:bg-slate-800/50'}`}>
+        <tr className={`border-b border-white/10 transition-colors ${isSelected ? 'bg-white/10' : 'hover:bg-white/5'}`}>
             <td className="p-3 text-center">
-                <input type="checkbox" checked={isSelected} onChange={() => onSelect(record.id)} className="w-4 h-4 bg-slate-800 border-slate-600 text-blue-500 focus:ring-blue-500" />
+                <input type="checkbox" checked={isSelected} onChange={() => onSelect(record.id)} className="w-4 h-4 bg-transparent border-slate-600 text-blue-500 focus:ring-blue-500" />
             </td>
             <td className="p-3">
                 <div className="font-semibold text-slate-200">{record.candidateName || record.resumeFileName}</div>
@@ -763,21 +763,21 @@ const CandidateRow: React.FC<{
                     onChange={(e) => onUpdate(record.id, { status: e.target.value as CandidateStatus })}
                     className={`px-2 py-1 text-xs font-medium rounded-md border-0 focus:ring-2 focus:ring-blue-500 ${statusClasses[record.status]} bg-transparent`}
                 >
-                    {Object.values(CandidateStatus).map(s => <option key={s} value={s} className="bg-slate-800 text-white">{s}</option>)}
+                    {Object.values(CandidateStatus).map(s => <option key={s} value={s} className="bg-slate-900 text-white">{s}</option>)}
                 </select>
             </td>
             <td className="p-3"><EditableNoteCell record={record} onUpdate={onUpdate} /></td>
             <td className="p-3 text-right">
-                <div className="flex justify-end items-center gap-2">
+                <div className="flex justify-end items-center gap-1">
                     {record.videoRecordingUrl && (
-                        <button onClick={() => onViewVideo(record)} title="View Interview Recording" className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-md transition-colors">
+                        <button onClick={() => onViewVideo(record)} title="View Interview Recording" className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-md transition-colors">
                             <VideoCameraIcon className="w-5 h-5" />
                         </button>
                     )}
-                    <button onClick={() => onViewProfile(record)} title="View Full Report" className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-md transition-colors">
+                    <button onClick={() => onViewProfile(record)} title="View Full Report" className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-md transition-colors">
                         <ClipboardDocumentListIcon className="w-5 h-5" />
                     </button>
-                    <button onClick={() => onCommunicate(record)} title="Communicate with Candidate" className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-md transition-colors">
+                    <button onClick={() => onCommunicate(record)} title="Communicate with Candidate" className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-md transition-colors">
                         <EnvelopeIcon className="w-5 h-5" />
                     </button>
                 </div>
@@ -847,31 +847,31 @@ const CandidateListView: React.FC<{
                         placeholder="Search candidates..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full sm:w-64 bg-slate-900 border border-slate-700 rounded-lg py-2 pl-10 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full sm:w-64 bg-white/5 backdrop-blur-md border border-white/10 rounded-lg py-2 pl-10 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
             </div>
             
             <div className="flex items-center gap-4 mb-4">
-                <button onClick={handleCompare} disabled={selectedIds.length < 2} className="px-3 py-2 text-sm font-medium text-slate-300 bg-slate-800/70 border border-slate-700 rounded-lg hover:bg-slate-700/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <button onClick={handleCompare} disabled={selectedIds.length < 2} className="px-3 py-2 text-sm font-medium text-slate-300 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                     Compare ({selectedIds.length})
                 </button>
-                 <button onClick={handleDownload} disabled={selectedIds.length === 0} className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-300 bg-slate-800/70 border border-slate-700 rounded-lg hover:bg-slate-700/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                 <button onClick={handleDownload} disabled={selectedIds.length === 0} className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-300 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                     <DocumentArrowDownIcon className="w-4 h-4" />
                     Export ({selectedIds.length})
                 </button>
             </div>
             
-            <div className="bg-slate-900/50 border border-slate-700 rounded-lg overflow-hidden">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
-                        <thead className="bg-slate-800">
+                        <thead className="bg-black/20 backdrop-blur-md">
                             <tr>
                                 <th className="p-3 text-center w-12">
                                     <input type="checkbox"
                                         checked={selectedIds.length > 0 && selectedIds.length === filteredRecords.length}
                                         onChange={() => setSelectedIds(selectedIds.length === filteredRecords.length ? [] : filteredRecords.map(r => r.id))}
-                                        className="w-4 h-4 bg-slate-800 border-slate-600 text-blue-500 focus:ring-blue-500"
+                                        className="w-4 h-4 bg-transparent border-slate-600 text-blue-500 focus:ring-blue-500"
                                     />
                                 </th>
                                 <th className="p-3 font-semibold text-slate-300 min-w-[200px]">Candidate</th>
@@ -925,7 +925,7 @@ export const HrDashboard: React.FC<{
     const TabButton: React.FC<{ tab: HrTab; label: string }> = ({ tab, label }) => (
         <button
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 font-semibold rounded-md text-sm transition-colors ${activeTab === tab ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
+            className={`px-4 py-2 font-semibold rounded-md text-sm transition-colors ${activeTab === tab ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-white/10'}`}
         >
             {label}
         </button>
@@ -933,7 +933,7 @@ export const HrDashboard: React.FC<{
 
     return (
         <div className="min-h-screen w-full flex text-white bg-transparent">
-            <aside className="w-64 bg-slate-900/50 backdrop-blur-md border-r border-slate-700 flex flex-col p-4">
+            <aside className="w-64 bg-black/30 backdrop-blur-2xl border-r border-white/10 flex flex-col p-4">
                 <div className="flex items-center gap-3 mb-8 px-2">
                     <UserCircleIcon className="w-8 h-8 text-blue-400" />
                     <div>
@@ -947,7 +947,7 @@ export const HrDashboard: React.FC<{
                     <TabButton tab="templates" label="Templates" />
                 </nav>
                 <div className="mt-auto">
-                    <button onClick={onLogout} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-300 bg-slate-800/50 border border-slate-700 rounded-lg hover:bg-slate-700/80 transition-colors">
+                    <button onClick={onLogout} className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-slate-300 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg hover:bg-white/20 transition-colors">
                         <ArrowRightOnRectangleIcon className="w-4 h-4" />
                         Logout
                     </button>

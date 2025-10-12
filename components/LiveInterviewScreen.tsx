@@ -31,7 +31,7 @@ const AiStatusIndicator: React.FC<{ status: AiStatus }> = ({ status }) => {
     const { icon: Icon, text, color, iconClass } = statusConfig[status];
 
     return (
-        <div className={`flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-950 border border-slate-700`}>
+        <div className={`flex items-center gap-3 px-3 py-2 rounded-lg bg-black/30 backdrop-blur-md border border-white/10`}>
             <Icon className={`w-5 h-5 ${color} ${iconClass}`} />
             <span className={`text-sm font-medium ${color}`}>{text}</span>
         </div>
@@ -71,18 +71,20 @@ async function decodeAudioData(data: Uint8Array, ctx: AudioContext): Promise<Aud
 }
 
 const CheatingWarningModal: React.FC = () => (
-    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-yellow-500/20 border-2 border-yellow-400 text-yellow-200 px-8 py-4 rounded-lg shadow-2xl z-50 animate-fade-in">
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-yellow-500/20 backdrop-blur-md border-2 border-yellow-400 text-yellow-200 px-8 py-4 rounded-lg shadow-2xl z-50 animate-fade-in">
         <p className="text-lg font-bold">Warning: Please do not use your mobile phone.</p>
     </div>
 );
 
 const TerminationModal: React.FC<{ onConfirmEnd: () => void }> = ({ onConfirmEnd }) => (
-    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-center p-4 z-50 animate-fade-in">
-        <h2 className="text-3xl font-bold text-red-500 mb-4">Interview Terminated</h2>
-        <p className="text-slate-300 mb-8">The interview has been terminated due to repeated policy violations.</p>
-        <button onClick={onConfirmEnd} className="px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors">
-            Return to Setup
-        </button>
+    <div className="absolute inset-0 bg-black/80 flex items-center justify-center text-center p-4 z-50 animate-fade-in">
+        <div className="bg-slate-900/70 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 max-w-md">
+            <h2 className="text-3xl font-bold text-red-500 mb-4">Interview Terminated</h2>
+            <p className="text-slate-300 mb-8">The interview has been terminated due to repeated policy violations.</p>
+            <button onClick={onConfirmEnd} className="px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors">
+                Return to Setup
+            </button>
+        </div>
     </div>
 );
 
@@ -416,7 +418,7 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
     }
 
     return (
-        <div className="h-screen w-full flex flex-col text-white p-4 gap-4 animate-fade-in relative bg-[#0f172a]">
+        <div className="h-screen w-full flex flex-col text-white p-4 gap-4 animate-fade-in relative bg-transparent">
             <canvas ref={webcamCanvasRef} style={{ display: 'none' }}></canvas>
             {showCheatingWarning && <CheatingWarningModal />}
 
@@ -431,7 +433,7 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
                     </button>
                 </div>
                 <div className="flex-1 flex justify-end">
-                    <button onClick={onRestart} className="px-3 py-1 text-sm font-medium text-slate-300 bg-slate-950 border border-slate-700 rounded-md hover:bg-slate-800 transition-colors">
+                    <button onClick={onRestart} className="px-3 py-1 text-sm font-medium text-slate-300 bg-white/10 backdrop-blur-md border border-white/20 rounded-md hover:bg-white/20 transition-colors">
                         Leave full screen
                     </button>
                 </div>
@@ -442,7 +444,7 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
                 {/* Left Pane */}
                 <div className="flex-[2] flex flex-col gap-4">
                      {/* Video Container */}
-                    <div className="flex-1 bg-black rounded-lg shadow-2xl border border-slate-700 relative min-h-0">
+                    <div className="flex-1 bg-black/30 backdrop-blur-lg rounded-lg shadow-2xl border border-white/10 relative min-h-0">
                         <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover rounded-lg" />
                         <div className="absolute top-4 left-4 flex flex-col sm:flex-row items-start sm:items-center gap-2">
                             <div className="flex items-center gap-2 bg-black/50 text-white px-3 py-1 rounded-md text-sm font-semibold animate-pulse-live backdrop-blur-sm border border-white/20">
@@ -468,25 +470,25 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
                         </div>
                     </div>
                      {/* Code Editor */}
-                    <div className="h-48 flex flex-col">
-                        <div className="bg-slate-800 text-slate-400 px-3 py-1 rounded-t-md text-xs font-mono">Python Code Editor (for coding challenges)</div>
+                    <div className="h-48 flex flex-col bg-black/30 backdrop-blur-lg rounded-lg border border-white/10">
+                        <div className="bg-black/20 text-slate-400 px-3 py-1 rounded-t-md text-xs font-mono">Python Code Editor (for coding challenges)</div>
                         <textarea 
                             value={code}
                             onChange={(e) => setCode(e.target.value)}
                             placeholder="The AI will instruct you when to use this editor." 
-                            className="w-full flex-1 bg-slate-900 border border-t-0 border-slate-700 rounded-b-md p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-200 placeholder-slate-500 font-mono text-sm resize-none" />
+                            className="w-full flex-1 bg-transparent rounded-b-md p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-200 placeholder-slate-500 font-mono text-sm resize-none custom-scrollbar" />
                     </div>
                 </div>
 
                 {/* Right Pane */}
-                <div className="flex-[1] flex flex-col">
+                <div className="flex-[1] flex flex-col gap-4">
                      {/* Transcript */}
-                    <div className="flex-1 bg-slate-900 border border-slate-700 rounded-lg flex flex-col min-h-0">
-                        <h3 className="text-lg font-semibold p-4 border-b border-slate-700">Transcript</h3>
+                    <div className="flex-1 bg-black/30 backdrop-blur-lg border border-white/10 rounded-lg flex flex-col min-h-0">
+                        <h3 className="text-lg font-semibold p-4 border-b border-white/10">Transcript</h3>
                         <div className="flex-1 p-4 space-y-4 overflow-y-auto custom-scrollbar">
                            {transcript.map((entry, index) => (
                                <div key={index} className={`flex w-full ${entry.speaker === 'user' ? 'justify-start' : 'justify-end'}`}>
-                                   <div className={`px-4 py-2 rounded-xl max-w-[90%] ${entry.speaker === 'user' ? 'bg-slate-700 text-slate-300 rounded-bl-none' : 'bg-blue-600 text-white rounded-br-none'}`}>
+                                   <div className={`px-4 py-2 rounded-xl max-w-[90%] backdrop-blur-md ${entry.speaker === 'user' ? 'bg-slate-700/50 text-slate-300 rounded-bl-none border border-slate-600/50' : 'bg-blue-600/50 text-white rounded-br-none border border-blue-500/50'}`}>
                                       <p className="text-sm whitespace-pre-wrap">{entry.text}</p>
                                    </div>
                                </div>
@@ -495,7 +497,7 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
                         </div>
                     </div>
                      {/* Controls */}
-                    <div className="flex-shrink-0 flex items-center justify-between gap-3 p-2">
+                    <div className="flex-shrink-0 flex items-center justify-between gap-3 p-2 bg-black/30 backdrop-blur-lg border border-white/10 rounded-lg">
                         <AiStatusIndicator status={aiStatus} />
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-2">
@@ -508,13 +510,13 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
                                 title={isMuted ? 'Unmute microphone' : 'Mute microphone'}
                                 className={`p-2.5 rounded-full border transition-colors ${
                                     isMuted 
-                                    ? 'bg-red-600 border-red-500 hover:bg-red-700' 
-                                    : 'bg-slate-800 border-slate-700 hover:bg-slate-700'
+                                    ? 'bg-red-600/50 border-red-500 hover:bg-red-600/70' 
+                                    : 'bg-white/10 border-white/20 hover:bg-white/20'
                                 }`}
                             >
                                 <MicrophoneIcon className="w-5 h-5 text-slate-300" isMuted={isMuted} />
                             </button>
-                             <button onClick={handleEnd} className="px-5 py-2.5 bg-red-600 text-white font-bold rounded-lg text-sm hover:bg-red-700 transition-colors">
+                             <button onClick={handleEnd} className="px-5 py-2.5 bg-red-600/70 border border-red-500 text-white font-bold rounded-lg text-sm hover:bg-red-600 transition-colors">
                                 End
                             </button>
                         </div>

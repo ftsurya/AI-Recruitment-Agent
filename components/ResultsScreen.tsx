@@ -10,7 +10,7 @@ interface ResultsScreenProps {
 }
 
 const InfoCard: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-    <div className="bg-white/5 backdrop-blur-md border border-white/20 p-6 rounded-xl shadow-lg">
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-lg">
         <h3 className="text-lg font-semibold text-blue-300 mb-3">{title}</h3>
         <div className="text-slate-300">{children}</div>
     </div>
@@ -46,7 +46,7 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ report, onRestart, isLoad
         <div className="max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-center mb-8">
                 <h1 className="text-4xl font-bold text-slate-100">Interview Report</h1>
-                 <button onClick={onRestart} className="mt-4 md:mt-0 flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-300 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                 <button onClick={onRestart} className="mt-4 md:mt-0 flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-300 bg-white/10 backdrop-blur-md rounded-lg hover:bg-white/20 transition-colors">
                    <ArrowPathIcon className="w-4 h-4"/>
                     Start New Interview
                 </button>
@@ -54,12 +54,12 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ report, onRestart, isLoad
             
             {/* Overall Performance */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-slide-in-up">
-                <div className="md:col-span-2 bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-xl flex flex-col justify-center items-center text-center shadow-2xl">
+                <div className="md:col-span-2 bg-white/10 backdrop-blur-xl border border-white/10 p-8 rounded-2xl flex flex-col justify-center items-center text-center shadow-2xl">
                     <h2 className="text-2xl font-bold mb-2">Overall Score</h2>
                     <p className="text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-4">{feedback.overall_score}</p>
                     <StarRating rating={feedback.star_rating} size="lg" />
                 </div>
-                <div className="bg-white/5 backdrop-blur-md border border-white/20 p-6 rounded-xl flex flex-col justify-center text-center shadow-lg">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-2xl flex flex-col justify-center text-center shadow-lg">
                     <h2 className="text-lg font-semibold text-slate-300 mb-2">Final Recommendation</h2>
                     <p className={`text-2xl font-bold ${recommendationColor}`}>{feedback.final_recommendation}</p>
                      <p className="text-sm text-slate-400 mt-2">Experience: {feedback.inferred_experience_level}</p>

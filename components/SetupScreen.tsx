@@ -37,10 +37,10 @@ const InterviewTypeButton: React.FC<{
     return (
         <button
             onClick={() => onSelect(type)}
-            className={`px-6 py-3 border rounded-lg text-left transition-all duration-300 w-full
+            className={`p-6 border rounded-xl text-left transition-all duration-300 w-full bg-white/5 backdrop-blur-md hover:bg-white/10
                 ${ selected
-                        ? 'bg-blue-500/20 border-blue-400 ring-2 ring-blue-400'
-                        : 'bg-white/5 border-white/10 hover:bg-white/10'
+                        ? 'border-blue-400 ring-2 ring-blue-400/50'
+                        : 'border-white/10'
                 }
             `}
         >
@@ -87,7 +87,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
                 <span>{currentUser.name}</span>
             </div>
         )}
-        <button onClick={onLogout} className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-300 bg-slate-800/50 border border-slate-700 rounded-lg hover:bg-slate-700/80 transition-colors">
+        <button onClick={onLogout} className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-300 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg hover:bg-white/20 transition-colors">
             <ArrowRightOnRectangleIcon className="w-4 h-4"/>
             Logout
         </button>
@@ -103,7 +103,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
           </p>
         </div>
 
-        <div className="bg-slate-900/50 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl animate-slide-in-up">
+        <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 shadow-2xl animate-slide-in-up">
            {/* Template Loader */}
            {templates.length > 0 && (
                 <div className="mb-6">
@@ -111,11 +111,11 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
                     <select
                         id="template-select"
                         onChange={handleTemplateSelect}
-                        className="w-full p-3 bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-300 text-sm"
+                        className="w-full p-3 bg-slate-900/50 backdrop-blur-sm border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-300 text-sm"
                         defaultValue=""
                     >
                         <option value="" disabled>Select a template to populate job details...</option>
-                        {templates.map(t => <option key={t.id} value={t.id}>{t.name} ({t.companyName})</option>)}
+                        {templates.map(t => <option key={t.id} value={t.id} className="bg-slate-900">{t.name} ({t.companyName})</option>)}
                     </select>
                 </div>
            )}
@@ -128,7 +128,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
                     value={candidateEmail}
                     onChange={(e) => setCandidateEmail(e.target.value)}
                     placeholder="e.g., alex.johnson@example.com"
-                    className="w-full p-3 bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-300 placeholder-slate-500 text-sm"
+                    className="w-full p-3 bg-slate-900/50 backdrop-blur-sm border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-300 placeholder-slate-500 text-sm"
                     disabled={isLoading}
                     required
                 />
@@ -139,7 +139,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
                  <h2 className="text-lg font-semibold text-slate-200 mb-3">Candidate Resume (PDF, TXT, DOCX)</h2>
                  <div className="h-64">
                  {resumeFileName ? (
-                    <div className="bg-slate-800 border border-green-500/50 rounded-lg h-full flex flex-col items-center justify-center text-center p-4">
+                    <div className="bg-green-500/10 backdrop-blur-md border border-green-500/50 rounded-lg h-full flex flex-col items-center justify-center text-center p-4">
                         <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                         </div>
@@ -150,7 +150,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
                         </button>
                     </div>
                 ) : (
-                    <label className="relative border-2 border-dashed border-slate-600 rounded-lg h-full flex flex-col items-center justify-center text-center hover:border-blue-500 transition-colors bg-slate-800/50 cursor-pointer">
+                    <label className="relative border-2 border-dashed border-slate-600 rounded-lg h-full flex flex-col items-center justify-center text-center hover:border-blue-500 transition-colors bg-black/20 backdrop-blur-sm cursor-pointer">
                         <input
                             type="file"
                             onChange={onFileChange}
@@ -170,7 +170,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
             {/* Interview Mode */}
             <div className="mt-8">
                 <h2 className="text-lg font-semibold text-center text-slate-200 mb-4">Interview Mode</h2>
-                <div className="flex justify-center gap-4">
+                <div className="flex flex-col md:flex-row justify-center gap-4">
                      <InterviewTypeButton
                         type={InterviewType.CHAT}
                         title="Chat"
@@ -188,29 +188,18 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
                 </div>
             </div>
              
-            {interviewType === InterviewType.LIVE && (
-                <div className="mt-6 bg-slate-800/50 border border-yellow-500/30 rounded-lg p-4 flex items-start gap-4 animate-fade-in">
+            {(interviewType === InterviewType.LIVE || interviewType === InterviewType.CHAT) && (
+                <div className="mt-6 bg-yellow-900/30 backdrop-blur-md border border-yellow-500/30 rounded-lg p-4 flex items-start gap-4 animate-fade-in">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                     <div>
-                        <h3 className="font-semibold text-yellow-300">Proctoring Enabled for Live Interviews</h3>
+                        <h3 className="font-semibold text-yellow-300">Proctoring is Always Enabled</h3>
                         <p className="text-sm text-slate-400 mt-1">
-                            To ensure a fair evaluation, live interviews are monitored using your webcam and screen sharing. The system will check for mobile phone usage or other prohibited activities. Please close all unnecessary applications before starting.
+                          To ensure a fair and authentic evaluation, all interviews are monitored for integrity. For live interviews, this includes webcam and screen analysis. For chat interviews, responses are checked for plagiarism. Please close all unnecessary applications before starting.
                         </p>
                     </div>
                 </div>
             )}
 
-            {interviewType === InterviewType.CHAT && (
-                <div className="mt-6 bg-slate-800/50 border border-yellow-500/30 rounded-lg p-4 flex items-start gap-4 animate-fade-in">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                    <div>
-                        <h3 className="font-semibold text-yellow-300">Proctoring Enabled for Chat Interviews</h3>
-                        <p className="text-sm text-slate-400 mt-1">
-                            To ensure the integrity of your responses, all submissions are automatically analyzed for plagiarism and AI-generated content. Please use your own words.
-                        </p>
-                    </div>
-                </div>
-            )}
 
             <div className="mt-8">
                 <button
@@ -219,7 +208,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
                     className={`w-full max-w-xs mx-auto text-lg font-bold py-3 px-6 rounded-lg transition-all duration-300 flex items-center justify-center
                         ${isStartDisabled
                         ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg'
+                        : 'bg-blue-600/40 backdrop-blur-md border border-blue-400/60 hover:bg-blue-500/60 text-white shadow-lg shadow-blue-500/30'
                         }`}
                 >
                 {isLoading ? (

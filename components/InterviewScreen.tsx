@@ -30,7 +30,11 @@ const ChatBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
   return (
     <div className={`flex items-end gap-3 ${isAI ? 'justify-start' : 'justify-end'} animate-fade-in`}>
       {isAI && <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex-shrink-0"></div>}
-      <div className={`max-w-2xl p-4 rounded-2xl ${isAI ? 'bg-slate-700 text-slate-200 rounded-bl-none' : 'bg-blue-600 text-white rounded-br-none'}`}>
+      <div className={`max-w-2xl p-4 rounded-2xl backdrop-blur-lg
+        ${isAI 
+          ? 'bg-slate-800/50 border border-slate-600/50 text-slate-200 rounded-bl-none' 
+          : 'bg-blue-600/50 border border-blue-500/50 text-white rounded-br-none'
+        }`}>
         <p className="whitespace-pre-wrap">{message.content}</p>
         {message.analysis && (
           <div className="mt-3 pt-3 border-t border-white/20 text-xs">
@@ -50,13 +54,13 @@ const ChatBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
 
 const CodeEditor: React.FC<{ code: string, setCode: (c: string) => void, disabled: boolean }> = ({ code, setCode, disabled }) => {
   return (
-    <div className="bg-slate-900 border border-slate-600 rounded-lg p-2 font-mono text-sm">
-      <div className="bg-slate-800 text-slate-400 px-3 py-1 rounded-t-md text-xs">Python IDE</div>
+    <div className="bg-black/20 backdrop-blur-md border border-slate-600 rounded-lg p-2 font-mono text-sm">
+      <div className="bg-black/20 text-slate-400 px-3 py-1 rounded-t-md text-xs">Python IDE</div>
       <textarea
         value={code}
         onChange={(e) => setCode(e.target.value)}
         placeholder="This is a coding environment. Please write your Python code here."
-        className="w-full h-48 bg-slate-900 text-slate-200 p-3 rounded-b-md focus:outline-none resize-none"
+        className="w-full h-48 bg-transparent text-slate-200 p-3 rounded-b-md focus:outline-none resize-none custom-scrollbar"
         disabled={disabled}
       />
     </div>
@@ -64,32 +68,36 @@ const CodeEditor: React.FC<{ code: string, setCode: (c: string) => void, disable
 }
 
 const WarningModal: React.FC<{ message: string }> = ({ message }) => (
-    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-yellow-500/20 border-2 border-yellow-400 text-yellow-200 px-8 py-4 rounded-lg shadow-2xl z-50 animate-fade-in">
+    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-yellow-500/20 backdrop-blur-md border-2 border-yellow-400 text-yellow-200 px-8 py-4 rounded-lg shadow-2xl z-50 animate-fade-in">
         <p className="text-lg font-bold">{message}</p>
     </div>
 );
 
 const TerminationModal: React.FC<{ onConfirmEnd: () => void }> = ({ onConfirmEnd }) => (
-    <div className="fixed inset-0 bg-black/80 flex flex-col items-center justify-center text-center p-4 z-50 animate-fade-in">
-        <h2 className="text-3xl font-bold text-red-500 mb-4">Interview Terminated</h2>
-        <p className="text-slate-300 mb-8">The interview has been terminated due to repeated policy violations.</p>
-        <button onClick={onConfirmEnd} className="px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors">
-            Return to Setup
-        </button>
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center text-center p-4 z-50 animate-fade-in">
+        <div className="bg-slate-900/70 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 max-w-md">
+            <h2 className="text-3xl font-bold text-red-500 mb-4">Interview Terminated</h2>
+            <p className="text-slate-300 mb-8">The interview has been terminated due to repeated policy violations.</p>
+            <button onClick={onConfirmEnd} className="px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors">
+                Return to Setup
+            </button>
+        </div>
     </div>
 );
 
 const DeepIdleModal: React.FC<{ onContinue: () => void; onRestart: () => void }> = ({ onContinue, onRestart }) => (
-    <div className="fixed inset-0 bg-black/80 flex flex-col items-center justify-center text-center p-4 z-50 animate-fade-in">
-        <h2 className="text-3xl font-bold text-slate-200 mb-4">Are you still there?</h2>
-        <p className="text-slate-400 mb-8 max-w-md">The interview has been paused due to inactivity. You can continue where you left off or restart the session.</p>
-        <div className="flex gap-4">
-            <button onClick={onRestart} className="px-6 py-3 bg-slate-700 text-white font-bold rounded-lg hover:bg-slate-600 transition-colors">
-                Restart Interview
-            </button>
-            <button onClick={onContinue} className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-500 transition-colors">
-                I'm Back, Continue
-            </button>
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center text-center p-4 z-50 animate-fade-in">
+        <div className="bg-slate-900/70 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 max-w-md">
+            <h2 className="text-3xl font-bold text-slate-200 mb-4">Are you still there?</h2>
+            <p className="text-slate-400 mb-8">The interview has been paused due to inactivity. You can continue where you left off or restart the session.</p>
+            <div className="flex gap-4">
+                <button onClick={onRestart} className="px-6 py-3 bg-slate-700 text-white font-bold rounded-lg hover:bg-slate-600 transition-colors">
+                    Restart Interview
+                </button>
+                <button onClick={onContinue} className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-500 transition-colors">
+                    I'm Back, Continue
+                </button>
+            </div>
         </div>
     </div>
 );
@@ -176,19 +184,19 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
   const progress = Math.min((questionCount / (totalSections-1)) * 100, 100);
 
   return (
-    <div className="relative h-screen w-full flex flex-col text-white bg-[#0f172a]">
+    <div className="relative h-screen w-full flex flex-col text-white bg-transparent">
       {showWarning && <WarningModal message="Warning: Your response has been flagged for review." />}
       {isTerminated && <TerminationModal onConfirmEnd={onConfirmTermination} />}
       {isDeeplyIdle && <DeepIdleModal onContinue={onContinueInterview} onRestart={onRestart} />}
 
 
       {/* Header */}
-      <header className="flex items-center justify-between p-4 bg-white/5 backdrop-blur-md border-b border-white/10 shadow-lg">
+      <header className="flex items-center justify-between p-4 bg-slate-900/50 backdrop-blur-xl border-b border-white/10 shadow-lg">
         <div>
             <h1 className="text-xl font-bold text-slate-100">AI Interview for {currentUser?.name || 'Candidate'}</h1>
             <p className="text-sm text-blue-300">Section {questionCount + 1} of {totalSections}</p>
         </div>
-        <button onClick={onRestart} className="px-3 py-1 text-sm font-medium text-blue-300 bg-white/10 rounded-lg hover:bg-white/20 transition-colors flex items-center gap-2">
+        <button onClick={onRestart} className="px-3 py-1 text-sm font-medium text-blue-300 bg-white/10 backdrop-blur-md rounded-lg hover:bg-white/20 transition-colors flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h5M20 20v-5h-5M4 4l1.5 1.5A9 9 0 0120.5 8.5M20 20l-1.5-1.5A9 9 0 003.5 15.5" /></svg>
             Restart
         </button>
@@ -207,7 +215,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
         {isAiResponding && (
           <div className="flex justify-start items-end gap-3">
              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex-shrink-0"></div>
-             <div className="bg-slate-700 p-4 rounded-2xl rounded-bl-none flex items-center space-x-2">
+             <div className="bg-slate-800/50 backdrop-blur-lg border border-slate-600/50 p-4 rounded-2xl rounded-bl-none flex items-center space-x-2">
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
@@ -217,7 +225,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-white/5 border-t border-white/10">
+      <div className="p-4 bg-slate-900/50 backdrop-blur-xl border-t border-white/10">
         <form onSubmit={handleSubmit}>
            {isCodingActive ? (
              <CodeEditor code={code} setCode={setCode} disabled={isAiResponding} />
@@ -227,14 +235,14 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type your answer here..."
-              className="w-full bg-slate-800 border border-slate-600 rounded-full py-3 pl-5 pr-14 focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-200 placeholder-slate-500"
+              className="w-full bg-slate-900/50 backdrop-blur-sm border border-slate-600 rounded-full py-3 pl-5 pr-14 focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-200 placeholder-slate-500"
               disabled={isAiResponding}
             />
            )}
           <button
             type="submit"
             disabled={isAiResponding || (isCodingActive ? !code.trim() : !input.trim())}
-            className="w-full mt-3 text-lg font-bold py-3 px-6 rounded-lg transition-all duration-300 flex items-center justify-center bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed"
+            className="w-full mt-3 text-lg font-bold py-3 px-6 rounded-lg transition-all duration-300 flex items-center justify-center bg-blue-600/40 backdrop-blur-md border border-blue-400/60 hover:bg-blue-500/60 text-white shadow-lg shadow-blue-500/30 disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none disabled:border-slate-600"
           >
             {isCodingActive ? 'Submit Code' : 'Send Answer'}
           </button>
