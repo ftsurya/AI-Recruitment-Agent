@@ -19,7 +19,6 @@ interface SetupScreenProps {
   onRemoveResume: () => void;
   interviewType: InterviewType;
   setInterviewType: (type: InterviewType) => void;
-  error: string | null;
   // Customization props
   totalQuestions: number;
   setTotalQuestions: (n: number) => void;
@@ -71,7 +70,6 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
   onRemoveResume,
   interviewType,
   setInterviewType,
-  error,
   totalQuestions,
   setTotalQuestions,
   technicalRatio,
@@ -278,7 +276,6 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
             )}
 
             <div className="mt-8">
-                {error && <p className="text-red-400 text-center mb-4">{error}</p>}
                 <button
                     onClick={onStart}
                     disabled={isStartDisabled}

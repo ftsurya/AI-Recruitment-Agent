@@ -7,6 +7,7 @@ import LiveInterviewScreen from './components/LiveInterviewScreen';
 import ResultsScreen from './components/ResultsScreen';
 import HrDashboard from './components/HrDashboard';
 import useLocalStorage from './hooks/useLocalStorage';
+import ErrorDisplay from './components/ErrorDisplay';
 import { DocumentTextIcon, ChatBubbleLeftRightIcon, ShieldCheckIcon, CodeBracketIcon, GaugeIcon, ComputerDesktopIcon, BeakerIcon, RobotIcon, UserCircleIcon, BuildingOfficeIcon, MicrosoftIcon } from './components/icons';
 
 interface MediaStreams {
@@ -218,9 +219,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
   const handleLogin = () => {
     if (selectedRole === 'Candidate') {
-      onLogin({ name: 'Alex Johnson', role: 'Candidate' });
+      onLogin({ name: 'Candidate', role: 'Candidate' });
     } else if (selectedRole === 'HR') {
-      onLogin({ name: 'Sarah Chen', role: 'HR' });
+      onLogin({ name: 'HR', role: 'HR' });
     }
   };
 
@@ -403,8 +404,8 @@ const App: React.FC = () => {
                 const firstMessage = await aiRecruiterService.generateFirstQuestion(jobContext, resumeText, totalQuestions);
                 setChatHistory([firstMessage]);
                 setViewState(ViewState.INTERVIEW);
-            } catch (e) {
-                setError("Failed to start the interview. Please check your API key and try again.");
+            } catch (e: any) {
+                setError(e.message);
                 console.error(e);
             } finally {
                 setIsLoading(false);
@@ -467,8 +468,8 @@ const App: React.FC = () => {
                 };
                 setChatHistory([...historyWithAnalysis, newAiMessage]);
 
-            } catch (e) {
-                setError("Failed to get the next question.");
+            } catch (e: any) {
+                setError(e.message);
                 console.error(e);
                 const errorMessage: ChatMessage = { role: 'ai', content: "I'm sorry, I encountered an error. Let's try restarting the interview." };
                 setChatHistory(prev => [...prev, errorMessage]);
@@ -512,8 +513,8 @@ const App: React.FC = () => {
             };
             setHistory(prev => [...prev, newRecord]);
 
-        } catch (e) {
-            setError("Failed to generate the final report.");
+        } catch (e: any) {
+            setError(e.message);
             console.error(e);
             setViewState(ViewState.INTERVIEW); 
         } finally {
@@ -625,7 +626,6 @@ const App: React.FC = () => {
                         onRemoveResume={() => { setResumeFileName(null); setResumeText(''); }}
                         interviewType={interviewType}
                         setInterviewType={setInterviewType}
-                        error={error}
                         totalQuestions={totalQuestions}
                         setTotalQuestions={setTotalQuestions}
                         technicalRatio={technicalRatio}
@@ -642,6 +642,7 @@ const App: React.FC = () => {
 
     return (
         <>
+            {error && <ErrorDisplay message={error} onDismiss={() => setError(null)} />}
             {currentView}
         </>
     );

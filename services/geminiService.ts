@@ -45,11 +45,30 @@ const generateContentWithRetry = async (
         }
     }
     console.error("API call failed after all retries.", lastError);
-    // Improve error thrown to be more specific if it's a 500 error
-    if (lastError && lastError.toString().includes('500')) {
-        throw new Error("The AI service is currently experiencing temporary issues. Please try again shortly.");
+    
+    const errorMessage = lastError ? lastError.toString().toLowerCase() : "";
+
+    if (errorMessage.includes('api key not valid')) {
+        throw new Error("Authentication Error: The provided API key is invalid. Please ensure it is configured correctly in your environment.");
     }
-    throw lastError;
+    if (errorMessage.includes('429')) {
+        throw new Error("Rate Limit Exceeded: Too many requests sent. Please wait a moment before trying again.");
+    }
+    if (errorMessage.includes('500') || errorMessage.includes('503') || errorMessage.includes('service unavailable')) {
+        throw new Error("Service Unavailable: The AI service is temporarily down or experiencing issues. Please try again in a few minutes.");
+    }
+    if (lastError instanceof TypeError && (errorMessage.includes('fetch') || errorMessage.includes('network'))) {
+        throw new Error("Network Connection Error: Unable to reach the AI service. Please check your internet connection.");
+    }
+
+    // Fallback for other Gemini-specific errors or unexpected issues
+    if (lastError && lastError.message) {
+        // Clean up potential verbose error messages from the SDK
+        const shortMessage = lastError.message.split('\n')[0];
+        throw new Error(`An unexpected error occurred: ${shortMessage}`);
+    }
+
+    throw new Error("An unknown error occurred while communicating with the AI service. Please try again.");
 };
 
 
@@ -67,8 +86,8 @@ const generateContentWithSchema = async <T,>(prompt: string, schema: any): Promi
     return JSON.parse(jsonText) as T;
   } catch (error) {
     console.error("Error generating content with schema after retries:", error);
-    // Propagate a more informative error message
-    throw new Error(`Failed to get a valid response from the AI model. Reason: ${error.message}`);
+    // Re-throw the specific error from generateContentWithRetry to be displayed in the UI.
+    throw error;
   }
 };
 
