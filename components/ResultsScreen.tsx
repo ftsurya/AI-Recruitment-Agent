@@ -24,7 +24,7 @@ const Pill: React.FC<{ text: string; color: 'green' | 'red' }> = ({ text, color 
 const ResultsScreen: React.FC<ResultsScreenProps> = ({ report, onRestart, isLoading }) => {
   if (isLoading || !report) {
     return (
-        <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 text-white bg-[#0f172a]">
+        <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 text-white bg-transparent">
             <div className="animate-pulse text-center">
                  <div className="w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
                 <h2 className="text-2xl font-bold mt-6">Generating Your Report...</h2>
@@ -42,7 +42,7 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ report, onRestart, isLoad
     : 'text-slate-300';
 
   return (
-    <div className="min-h-screen w-full p-4 md:p-8 text-white animate-fade-in bg-[#0f172a]">
+    <div className="min-h-screen w-full p-4 md:p-8 text-white animate-fade-in bg-transparent">
         <div className="max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-center mb-8">
                 <h1 className="text-4xl font-bold text-slate-100">Interview Report</h1>
@@ -89,7 +89,7 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ report, onRestart, isLoad
                         <div className="flex flex-col md:flex-row md:items-center justify-between">
                              <div>
                                 <p className="text-3xl font-bold text-green-400">{salary.salary_range}</p>
-                                <p className="text-slate-400 text-sm mt-1">{salary.justification}</p>
+                                <p className="text-sm text-slate-400 mt-1">{salary.justification}</p>
                             </div>
                             <div className="mt-4 md:mt-0 text-left md:text-right">
                                 <p><strong>Base:</strong> {salary.breakdown.base_salary}</p>

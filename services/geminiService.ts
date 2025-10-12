@@ -92,9 +92,9 @@ const generateContentWithSchema = async <T,>(prompt: string, schema: any): Promi
 };
 
 
-const generateFirstQuestion = async (jobDescription: string, resumeText: string, totalQuestions: number): Promise<ChatMessage> => {
+const generateFirstQuestion = async (jobDescription: string, resumeText: string): Promise<ChatMessage> => {
     const prompt = `
-    ${GREETING_PROMPT(totalQuestions)}
+    ${GREETING_PROMPT()}
 
     --- JOB DESCRIPTION ---
     ${jobDescription}
@@ -115,12 +115,12 @@ const generateFirstQuestion = async (jobDescription: string, resumeText: string,
     };
 };
 
-const getNextStep = async (chatHistory: ChatMessage[], jobDescription: string, resumeText: string, totalQuestions: number, technicalRatio: number, customQuestions: string): Promise<NextStep> => {
+const getNextStep = async (chatHistory: ChatMessage[], jobDescription: string, resumeText: string): Promise<NextStep> => {
     const recentHistory = chatHistory.slice(-10); // Keep context manageable
     const historyString = recentHistory.map(m => `${m.role}: ${m.content}`).join('\n');
     
     const prompt = `
-    ${NEXT_STEP_PROMPT(totalQuestions, technicalRatio, customQuestions)}
+    ${NEXT_STEP_PROMPT()}
 
     --- JOB DESCRIPTION ---
     ${jobDescription}

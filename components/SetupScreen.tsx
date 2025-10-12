@@ -19,13 +19,6 @@ interface SetupScreenProps {
   onRemoveResume: () => void;
   interviewType: InterviewType;
   setInterviewType: (type: InterviewType) => void;
-  // Customization props
-  totalQuestions: number;
-  setTotalQuestions: (n: number) => void;
-  technicalRatio: number;
-  setTechnicalRatio: (n: number) => void;
-  customQuestions: string;
-  setCustomQuestions: (q: string) => void;
   // Template props
   templates: InterviewTemplate[];
   onLoadTemplate: (template: InterviewTemplate) => void;
@@ -70,19 +63,12 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
   onRemoveResume,
   interviewType,
   setInterviewType,
-  totalQuestions,
-  setTotalQuestions,
-  technicalRatio,
-  setTechnicalRatio,
-  customQuestions,
-  setCustomQuestions,
   templates,
   onLoadTemplate,
   currentUser,
   onLogout
 }) => {
   const isStartDisabled = !companyName.trim() || !jobTitle.trim() || !candidateEmail.trim() || !jobDescription.trim() || !resumeFileName || isLoading;
-  const [isCustomizationVisible, setIsCustomizationVisible] = useState(false);
 
   const handleTemplateSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const templateId = e.target.value;
@@ -93,7 +79,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 text-white animate-fade-in bg-[#0f172a] relative">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 text-white animate-fade-in bg-transparent relative">
       <header className="absolute top-0 right-0 p-6 flex items-center gap-4">
         {currentUser && (
             <div className="flex items-center gap-2 text-slate-300">
@@ -201,55 +187,6 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
                     />
                 </div>
             </div>
-
-            {/* Customization Section */}
-            {interviewType === InterviewType.CHAT && (
-              <div className="mt-6">
-                <button
-                  onClick={() => setIsCustomizationVisible(!isCustomizationVisible)}
-                  className="w-full text-left font-semibold text-slate-300 hover:text-white transition-colors p-2"
-                >
-                  {isCustomizationVisible ? '▼ Hide' : '► Show'} Interview Customization
-                </button>
-                {isCustomizationVisible && (
-                  <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 mt-2 space-y-4 animate-fade-in">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-1">Total Questions (5-15)</label>
-                      <input
-                        type="number"
-                        min="5" max="15"
-                        value={totalQuestions}
-                        onChange={e => setTotalQuestions(Math.max(5, Math.min(15, parseInt(e.target.value, 10) || 5)))}
-                        className="w-full p-2 bg-slate-700 border border-slate-600 rounded-md text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-1">Question Mix</label>
-                      <div className="flex items-center gap-4">
-                          <span className="text-xs text-slate-400">Behavioral</span>
-                          <input
-                            type="range"
-                            min="0" max="100" step="10"
-                            value={technicalRatio}
-                            onChange={e => setTechnicalRatio(parseInt(e.target.value, 10))}
-                            className="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                          />
-                          <span className="text-xs text-slate-400">Technical ({technicalRatio}%)</span>
-                      </div>
-                    </div>
-                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-1">Must-Ask Questions (one per line)</label>
-                      <textarea
-                        value={customQuestions}
-                        onChange={e => setCustomQuestions(e.target.value)}
-                        placeholder="e.g., 'Describe a time you handled a conflict with a coworker.'"
-                        className="w-full h-24 p-2 bg-slate-700 border border-slate-600 rounded-md text-sm custom-scrollbar"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
              
             {interviewType === InterviewType.LIVE && (
                 <div className="mt-6 bg-slate-800/50 border border-yellow-500/30 rounded-lg p-4 flex items-start gap-4 animate-fade-in">

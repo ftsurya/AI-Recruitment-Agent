@@ -1,14 +1,17 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useReducer } from 'react';
 import { ViewState, InterviewType, ChatMessage, FinalReport, HistoricalInterviewRecord, CandidateStatus, TranscriptEntry, InterviewTemplate, User } from './types';
 import { aiRecruiterService } from './services/geminiService';
 import SetupScreen from './components/SetupScreen';
 import InterviewScreen from './components/InterviewScreen';
 import LiveInterviewScreen from './components/LiveInterviewScreen';
 import ResultsScreen from './components/ResultsScreen';
-import HrDashboard from './components/HrDashboard';
+// FIX: Changed to a named import for HrDashboard as it is not a default export.
+import { HrDashboard } from './components/HrDashboard';
 import useLocalStorage from './hooks/useLocalStorage';
 import ErrorDisplay from './components/ErrorDisplay';
 import { DocumentTextIcon, ChatBubbleLeftRightIcon, ShieldCheckIcon, CodeBracketIcon, GaugeIcon, ComputerDesktopIcon, BeakerIcon, RobotIcon, UserCircleIcon, BuildingOfficeIcon, MicrosoftIcon } from './components/icons';
+import DarkVeilBackground from './components/DarkVeilBackground';
+import ScrollFloatText from './components/ScrollFloatText';
 
 interface MediaStreams {
     camera: MediaStream;
@@ -44,7 +47,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
   };
   
   return (
-    <div className="w-full bg-[#0f172a] text-white">
+    <div className="w-full bg-transparent text-white">
       <header className="sticky top-0 bg-[#0f172a]/80 backdrop-blur-sm p-6 z-10">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -66,17 +69,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
       </header>
       <main>
         {/* Hero Section */}
-        <section className="min-h-[calc(100vh-88px)] flex items-center justify-center">
+        <section className="min-h-[calc(100vh-88px)] flex items-center justify-center relative">
             <div className="container mx-auto text-center px-4 animate-fade-in">
               <h1 className="text-4xl md:text-6xl font-extrabold mb-4">
                 The Future of Hiring is Here.
                 <br />
-                <span className="text-blue-400">Smarter, Faster AI-Powered Interviews.</span>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-blue-500">Smarter, Faster AI-Powered Interviews.</span>
               </h1>
-              <p className="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto">
-                Automate interviews, eliminate bias, and identify top candidates effortlessly. Let our AI agent handle the screening, so you can focus on hiring the best.
-              </p>
             </div>
+            <ScrollFloatText />
         </section>
 
         {/* Features Section */}
@@ -120,7 +121,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
         </section>
 
         {/* How It Works Section */}
-        <section id="how-it-works" className="py-20 bg-[#0f172a]">
+        <section id="how-it-works" className="py-20 bg-transparent">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
             <p className="text-slate-400 mb-12 max-w-2xl mx-auto">A simple four-step process to streamline your recruitment.</p>
@@ -199,7 +200,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
           </div>
         </section>
       </main>
-      <footer className="p-6 text-center text-slate-500 bg-[#0f172a]">
+      <footer className="p-6 text-center text-slate-500 bg-transparent">
         <p>&copy; {new Date().getFullYear()} AI Recruitment Agent. All rights reserved.</p>
       </footer>
     </div>
@@ -226,7 +227,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#0f172a] text-white flex flex-col items-center justify-center p-4 animate-fade-in">
+    <div className="min-h-screen w-full bg-transparent text-white flex flex-col items-center justify-center p-4 animate-fade-in">
       <div className="text-center w-full max-w-lg mx-auto">
         <div className="inline-block p-4 bg-blue-500/10 rounded-full mb-6 ring-1 ring-blue-500/20">
           <RobotIcon className="w-12 h-12 text-blue-400" />
@@ -282,10 +283,53 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 };
 
 
+// --- App State Management using useReducer ---
+
+interface AppState {
+  viewState: ViewState;
+  currentUser: User | null;
+}
+
+type AppAction =
+  | { type: 'LOGIN'; payload: User }
+  | { type: 'LOGOUT' }
+  | { type: 'SET_VIEW_STATE'; payload: ViewState };
+
+const initialState: AppState = {
+  viewState: ViewState.LANDING,
+  currentUser: null,
+};
+
+function appReducer(state: AppState, action: AppAction): AppState {
+  switch (action.type) {
+    case 'LOGIN':
+      return {
+        ...state,
+        currentUser: action.payload,
+        viewState: action.payload.role === 'HR' ? ViewState.HISTORY : ViewState.SETUP,
+      };
+    case 'LOGOUT':
+      return {
+        ...state,
+        currentUser: null,
+        viewState: ViewState.LANDING,
+      };
+    case 'SET_VIEW_STATE':
+      return {
+        ...state,
+        viewState: action.payload,
+      };
+    default:
+      return state;
+  }
+}
+
+
 // --- Main App Component ---
 const App: React.FC = () => {
-    const [viewState, setViewState] = useState<ViewState>(ViewState.LANDING);
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [appState, dispatch] = useReducer(appReducer, initialState);
+    const { viewState, currentUser } = appState;
+
     const [companyName, setCompanyName] = useState<string>('');
     const [jobTitle, setJobTitle] = useState<string>('');
     const [jobDescription, setJobDescription] = useState<string>('');
@@ -294,11 +338,6 @@ const App: React.FC = () => {
     const [resumeFileName, setResumeFileName] = useState<string | null>(null);
     const [interviewType, setInterviewType] = useState<InterviewType>(InterviewType.CHAT);
     
-    // Interview Customization State
-    const [totalQuestions, setTotalQuestions] = useState<number>(11);
-    const [technicalRatio, setTechnicalRatio] = useState<number>(50); // As a percentage
-    const [customQuestions, setCustomQuestions] = useState<string>('');
-
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -308,6 +347,7 @@ const App: React.FC = () => {
 
     const [chatWarningCount, setChatWarningCount] = useState(0);
     const [isChatTerminated, setIsChatTerminated] = useState(false);
+    const [isCandidateDeeplyIdle, setIsCandidateDeeplyIdle] = useState(false);
 
     const [mediaStreams, setMediaStreams] = useState<MediaStreams | null>(null);
     const mediaStreamsRef = useRef<MediaStreams | null>(null);
@@ -339,17 +379,17 @@ const App: React.FC = () => {
         setIsAiResponding(false);
         setChatWarningCount(0);
         setIsChatTerminated(false);
+        setIsCandidateDeeplyIdle(false);
     }, [stopMediaStreams]);
 
     const handleRestart = useCallback(() => {
         clearInterviewState();
-        setViewState(ViewState.SETUP);
+        dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.SETUP });
     }, [clearInterviewState]);
 
     const handleLogout = useCallback(() => {
         clearInterviewState();
-        setCurrentUser(null);
-        setViewState(ViewState.LANDING);
+        dispatch({ type: 'LOGOUT' });
     }, [clearInterviewState]);
     
     const handleUpdateRecord = (recordId: string, updatedFields: Partial<HistoricalInterviewRecord>) => {
@@ -361,17 +401,23 @@ const App: React.FC = () => {
     };
 
     const handleCandidateIdle = () => {
-        if (isAiResponding) return;
-        
+        if (isAiResponding || isCandidateDeeplyIdle) return;
+    
         const lastMessage = chatHistory.length > 0 ? chatHistory[chatHistory.length - 1] : null;
     
-        if (lastMessage && lastMessage.role === 'ai' && !lastMessage.isNudge) {
-            const nudgeMessage: ChatMessage = {
-                role: 'ai',
-                content: "Just checking in, are you still there? Please take your time to respond.",
-                isNudge: true
-            };
-            setChatHistory(prev => [...prev, nudgeMessage]);
+        if (lastMessage && lastMessage.role === 'ai') {
+            if (lastMessage.isNudge) {
+                // Already nudged, now show the modal.
+                setIsCandidateDeeplyIdle(true);
+            } else {
+                // First idle period, send a nudge.
+                const nudgeMessage: ChatMessage = {
+                    role: 'ai',
+                    content: "Just checking in, are you still there? Please take your time to respond.",
+                    isNudge: true
+                };
+                setChatHistory(prev => [...prev, nudgeMessage]);
+            }
         }
     };
 
@@ -401,9 +447,9 @@ const App: React.FC = () => {
 
         if (interviewType === InterviewType.CHAT) {
             try {
-                const firstMessage = await aiRecruiterService.generateFirstQuestion(jobContext, resumeText, totalQuestions);
+                const firstMessage = await aiRecruiterService.generateFirstQuestion(jobContext, resumeText);
                 setChatHistory([firstMessage]);
-                setViewState(ViewState.INTERVIEW);
+                dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.INTERVIEW });
             } catch (e: any) {
                 setError(e.message);
                 console.error(e);
@@ -418,7 +464,7 @@ const App: React.FC = () => {
                 const streams = { camera: cameraStream, screen: screenStream };
                 mediaStreamsRef.current = streams;
                 setMediaStreams(streams);
-                setViewState(ViewState.LIVE);
+                dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.LIVE });
             } catch (err) {
                 console.error("Failed to get media devices.", err);
                 setError("Camera, microphone, and screen sharing access is required for a live interview. Please enable permissions and try again.");
@@ -429,6 +475,7 @@ const App: React.FC = () => {
     };
 
     const handleSendMessage = async (message: string) => {
+        setIsCandidateDeeplyIdle(false); // User is active, hide modal.
         const newUserMessage: ChatMessage = { role: 'user', content: message };
         
         const proctoringResult = await aiRecruiterService.analyzeTextResponse(message);
@@ -448,33 +495,38 @@ const App: React.FC = () => {
         setChatHistory(updatedChatHistory);
         setIsAiResponding(true);
 
-        const questionCount = updatedChatHistory.filter(m => m.role === 'ai').length;
         const jobContext = `Job Title: ${jobTitle}\n\n${jobDescription}`;
 
-        if (questionCount >= totalQuestions) {
-             await generateAndSaveReport(updatedChatHistory, message);
-        } else {
-            try {
-                const { analysis, nextQuestion } = await aiRecruiterService.getNextStep(updatedChatHistory, jobContext, resumeText, totalQuestions, technicalRatio, customQuestions);
-                
-                const lastUserMessageIndex = updatedChatHistory.length - 1;
-                const historyWithAnalysis = [...updatedChatHistory];
-                historyWithAnalysis[lastUserMessageIndex].analysis = analysis;
+        try {
+            const { analysis, nextQuestion, interview_is_over } = await aiRecruiterService.getNextStep(updatedChatHistory, jobContext, resumeText);
+            
+            const lastUserMessageIndex = updatedChatHistory.length - 1;
+            const historyWithAnalysis = [...updatedChatHistory];
+            historyWithAnalysis[lastUserMessageIndex].analysis = analysis;
 
-                const newAiMessage: ChatMessage = { 
-                    role: 'ai', 
-                    content: nextQuestion.question_text,
-                    is_coding_challenge: nextQuestion.is_coding_challenge,
-                };
-                setChatHistory([...historyWithAnalysis, newAiMessage]);
+            const newAiMessage: ChatMessage = { 
+                role: 'ai', 
+                content: nextQuestion.question_text,
+                is_coding_challenge: nextQuestion.is_coding_challenge,
+            };
+            const finalHistory = [...historyWithAnalysis, newAiMessage];
+            setChatHistory(finalHistory);
 
-            } catch (e: any) {
-                setError(e.message);
-                console.error(e);
-                const errorMessage: ChatMessage = { role: 'ai', content: "I'm sorry, I encountered an error. Let's try restarting the interview." };
-                setChatHistory(prev => [...prev, errorMessage]);
-            } finally {
-                setIsAiResponding(false);
+            if (interview_is_over) {
+                await generateAndSaveReport(finalHistory, message);
+            }
+
+        } catch (e: any) {
+            setError(e.message);
+            console.error(e);
+            const errorMessage: ChatMessage = { role: 'ai', content: "I'm sorry, I encountered an error. Let's try restarting the interview." };
+            setChatHistory(prev => [...prev, errorMessage]);
+        } finally {
+            if (chatHistory.length > 2) { // Don't stop responding if it's not the end
+                const lastAIMessage = chatHistory[chatHistory.length - 1];
+                 if (lastAIMessage && !lastAIMessage.isNudge) {
+                    setIsAiResponding(false);
+                 }
             }
         }
     };
@@ -486,7 +538,7 @@ const App: React.FC = () => {
         liveTranscript?: TranscriptEntry[]
     ) => {
         try {
-            setViewState(ViewState.RESULTS); 
+            dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.RESULTS }); 
             const lastAiMessage = finalChatHistory.filter(m => m.role === 'ai').pop();
             const submission = lastAiMessage?.is_coding_challenge ? codeSubmission : undefined;
             
@@ -516,7 +568,7 @@ const App: React.FC = () => {
         } catch (e: any) {
             setError(e.message);
             console.error(e);
-            setViewState(ViewState.INTERVIEW); 
+            dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.INTERVIEW }); 
         } finally {
             setIsAiResponding(false);
         }
@@ -529,21 +581,13 @@ const App: React.FC = () => {
     }
     
     const handleLogin = (user: User) => {
-      setCurrentUser(user);
-      if (user.role === 'HR') {
-        setViewState(ViewState.HISTORY);
-      } else {
-        setViewState(ViewState.SETUP);
-      }
+      dispatch({ type: 'LOGIN', payload: user });
     };
 
     const handleLoadTemplate = (template: InterviewTemplate) => {
         setCompanyName(template.companyName);
         setJobTitle(template.jobTitle);
         setJobDescription(template.jobDescription);
-        setTotalQuestions(template.totalQuestions);
-        setTechnicalRatio(template.technicalRatio);
-        setCustomQuestions(template.customQuestions);
     };
 
     // --- Template CRUD Handlers ---
@@ -564,7 +608,7 @@ const App: React.FC = () => {
     let currentView;
     switch (viewState) {
         case ViewState.LANDING:
-            currentView = <LandingPage onLoginClick={() => setViewState(ViewState.LOGIN)} />;
+            currentView = <LandingPage onLoginClick={() => dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.LOGIN })} />;
             break;
         case ViewState.LOGIN:
             currentView = <LoginPage onLogin={handleLogin} />;
@@ -574,13 +618,15 @@ const App: React.FC = () => {
                         chatHistory={chatHistory} 
                         onSendMessage={handleSendMessage} 
                         isAiResponding={isAiResponding}
-                        questionCount={chatHistory.filter(m => m.role === 'ai').length}
+                        questionCount={chatHistory.filter(m => m.role === 'ai' && !m.isGreeting && !m.isNudge).length}
                         onRestart={handleRestart}
                         warningCount={chatWarningCount}
                         isTerminated={isChatTerminated}
                         onConfirmTermination={handleRestart}
                         currentUser={currentUser}
                         onCandidateIdle={handleCandidateIdle}
+                        isDeeplyIdle={isCandidateDeeplyIdle}
+                        onContinueInterview={() => setIsCandidateDeeplyIdle(false)}
                    />;
             break;
         case ViewState.RESULTS:
@@ -626,12 +672,6 @@ const App: React.FC = () => {
                         onRemoveResume={() => { setResumeFileName(null); setResumeText(''); }}
                         interviewType={interviewType}
                         setInterviewType={setInterviewType}
-                        totalQuestions={totalQuestions}
-                        setTotalQuestions={setTotalQuestions}
-                        technicalRatio={technicalRatio}
-                        setTechnicalRatio={setTechnicalRatio}
-                        customQuestions={customQuestions}
-                        setCustomQuestions={setCustomQuestions}
                         templates={templates}
                         onLoadTemplate={handleLoadTemplate}
                         currentUser={currentUser}
@@ -642,6 +682,7 @@ const App: React.FC = () => {
 
     return (
         <>
+            <DarkVeilBackground colorScheme="#2563eb" intensity={8.0} speed={1.0} />
             {error && <ErrorDisplay message={error} onDismiss={() => setError(null)} />}
             {currentView}
         </>

@@ -14,6 +14,8 @@ interface InterviewScreenProps {
   onConfirmTermination: () => void;
   currentUser: User | null;
   onCandidateIdle: () => void;
+  isDeeplyIdle: boolean;
+  onContinueInterview: () => void;
 }
 
 const ChatBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
@@ -77,6 +79,21 @@ const TerminationModal: React.FC<{ onConfirmEnd: () => void }> = ({ onConfirmEnd
     </div>
 );
 
+const DeepIdleModal: React.FC<{ onContinue: () => void; onRestart: () => void }> = ({ onContinue, onRestart }) => (
+    <div className="fixed inset-0 bg-black/80 flex flex-col items-center justify-center text-center p-4 z-50 animate-fade-in">
+        <h2 className="text-3xl font-bold text-slate-200 mb-4">Are you still there?</h2>
+        <p className="text-slate-400 mb-8 max-w-md">The interview has been paused due to inactivity. You can continue where you left off or restart the session.</p>
+        <div className="flex gap-4">
+            <button onClick={onRestart} className="px-6 py-3 bg-slate-700 text-white font-bold rounded-lg hover:bg-slate-600 transition-colors">
+                Restart Interview
+            </button>
+            <button onClick={onContinue} className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-500 transition-colors">
+                I'm Back, Continue
+            </button>
+        </div>
+    </div>
+);
+
 
 const InterviewScreen: React.FC<InterviewScreenProps> = ({
   chatHistory,
@@ -89,6 +106,8 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
   onConfirmTermination,
   currentUser,
   onCandidateIdle,
+  isDeeplyIdle,
+  onContinueInterview,
 }) => {
   const [input, setInput] = useState('');
   const [code, setCode] = useState('');
@@ -120,8 +139,8 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
     }
 
     const lastMessage = chatHistory[chatHistory.length - 1];
-    // Set a timer only if the last message was from the AI, it wasn't a nudge, and the AI isn't currently thinking of a new response.
-    if (lastMessage?.role === 'ai' && !isAiResponding && !lastMessage.isNudge) {
+    // Set a timer if the last message was from the AI and the modal isn't already showing.
+    if (lastMessage?.role === 'ai' && !isAiResponding && !isDeeplyIdle) {
         idleTimerRef.current = window.setTimeout(() => {
             onCandidateIdle();
         }, 60000); // 60 seconds
@@ -133,7 +152,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
             clearTimeout(idleTimerRef.current);
         }
     };
-  }, [chatHistory, isAiResponding, onCandidateIdle]);
+  }, [chatHistory, isAiResponding, onCandidateIdle, isDeeplyIdle]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,18 +172,21 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
     }
   };
 
-  const progress = Math.min(((questionCount - 1) / 11) * 100, 100);
+  const totalSections = 6; // Based on the new interview flow
+  const progress = Math.min((questionCount / (totalSections-1)) * 100, 100);
 
   return (
     <div className="relative h-screen w-full flex flex-col text-white bg-[#0f172a]">
       {showWarning && <WarningModal message="Warning: Your response has been flagged for review." />}
       {isTerminated && <TerminationModal onConfirmEnd={onConfirmTermination} />}
+      {isDeeplyIdle && <DeepIdleModal onContinue={onContinueInterview} onRestart={onRestart} />}
+
 
       {/* Header */}
       <header className="flex items-center justify-between p-4 bg-white/5 backdrop-blur-md border-b border-white/10 shadow-lg">
         <div>
             <h1 className="text-xl font-bold text-slate-100">AI Interview for {currentUser?.name || 'Candidate'}</h1>
-            <p className="text-sm text-blue-300">Question {questionCount} of 11</p>
+            <p className="text-sm text-blue-300">Section {questionCount + 1} of {totalSections}</p>
         </div>
         <button onClick={onRestart} className="px-3 py-1 text-sm font-medium text-blue-300 bg-white/10 rounded-lg hover:bg-white/20 transition-colors flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h5M20 20v-5h-5M4 4l1.5 1.5A9 9 0 0120.5 8.5M20 20l-1.5-1.5A9 9 0 003.5 15.5" /></svg>

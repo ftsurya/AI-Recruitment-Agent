@@ -54,6 +54,7 @@ export interface NextQuestion {
 export interface NextStep {
   analysis: ResponseAnalysis;
   nextQuestion: NextQuestion;
+  interview_is_over: boolean;
 }
 
 export interface SalaryBreakdown {
@@ -112,7 +113,4 @@ export interface InterviewTemplate {
   companyName: string;
   jobTitle: string;
   jobDescription: string;
-  totalQuestions: number;
-  technicalRatio: number;
-  customQuestions: string;
 }
