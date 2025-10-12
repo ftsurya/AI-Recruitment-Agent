@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob } from "@google/genai";
 import { aiRecruiterService } from '../services/geminiService';
@@ -244,7 +245,12 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
             
             const sessionPromise = ai.live.connect({
                 model: 'gemini-2.5-flash-native-audio-preview-09-2025',
-                config: { systemInstruction, responseModalities: [Modality.AUDIO], inputAudioTranscription: {}, outputAudioTranscription: {} },
+                config: { 
+                    systemInstruction, 
+                    responseModalities: [Modality.AUDIO], 
+                    inputAudioTranscription: {}, 
+                    outputAudioTranscription: {} 
+                },
                 callbacks: {
                     onopen: () => {
                         console.log('Session opened.');

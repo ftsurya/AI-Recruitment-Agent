@@ -156,7 +156,7 @@ const analyzeFrame = async (base64Image: string, streamType: 'webcam' | 'screen'
     try {
         const response = await ai.models.generateContent({
             model,
-            contents: [{ parts: [{ text: prompt }, imagePart] }],
+            contents: { parts: [{ text: prompt }, imagePart] },
             config: {
                 responseMimeType: "application/json",
                 responseSchema: visionProctoringSchema,

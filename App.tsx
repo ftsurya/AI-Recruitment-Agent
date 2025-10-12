@@ -8,7 +8,7 @@ import LiveInterviewScreen from './components/LiveInterviewScreen';
 import ResultsScreen from './components/ResultsScreen';
 import HrDashboard from './components/HrDashboard';
 import useLocalStorage from './hooks/useLocalStorage';
-import { MicrosoftIcon, GoogleIcon, DocumentTextIcon, ChatBubbleLeftRightIcon, ShieldCheckIcon, CodeBracketIcon, GaugeIcon, ComputerDesktopIcon, BeakerIcon } from './components/icons';
+import { DocumentTextIcon, ChatBubbleLeftRightIcon, ShieldCheckIcon, CodeBracketIcon, GaugeIcon, ComputerDesktopIcon, BeakerIcon, RobotIcon, UserCircleIcon, BuildingOfficeIcon, MicrosoftIcon } from './components/icons';
 
 interface MediaStreams {
     camera: MediaStream;
@@ -208,22 +208,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
 
 
 // --- Login Page Component ---
-const InterviewIllustration: React.FC<{ className?: string }> = ({ className }) => (
-    <svg viewBox="0 0 200 150" className={className} xmlns="http://www.w3.org/2000/svg">
-        <rect width="200" height="150" fill="#e2e8f0" rx="10"/>
-        <rect x="20" y="20" width="160" height="110" fill="#f8fafc" rx="5"/>
-        <circle cx="100" cy="75" r="25" fill="#cbd5e1"/>
-        <path d="M85 90 C 90 105, 110 105, 115 90" fill="#94a3b8" />
-        <circle cx="90" cy="70" r="3" fill="#475569"/>
-        <circle cx="110" cy="70" r="3" fill="#475569"/>
-        <rect x="30" y="40" width="30" height="20" rx="3" fill="#4299e1"/><path d="M35,45 l5,5 l10,-10" stroke="#fff" strokeWidth="2" fill="none" />
-        <rect x="30" y="90" width="30" height="20" rx="3" fill="#4299e1"/><path d="M35,95 l5,5 l10,-10" stroke="#fff" strokeWidth="2" fill="none" />
-        <rect x="140" y="40" width="30" height="20" rx="3" fill="#4299e1"/><path d="M145,45 l5,5 l10,-10" stroke="#fff" strokeWidth="2" fill="none" />
-        <rect x="140" y="90" width="30" height="20" rx="3" fill="#4299e1"/><path d="M145,95 l5,5 l10,-10" stroke="#fff" strokeWidth="2" fill="none" />
-        <line x1="20" y1="60" x2="180" y2="60" stroke="#cbd5e1" strokeWidth="1" /><line x1="20" y1="80" x2="180" y2="80" stroke="#cbd5e1" strokeWidth="1" />
-    </svg>
-);
-
 type UserRole = 'Candidate' | 'HR';
 
 interface LoginPageProps {
@@ -231,47 +215,56 @@ interface LoginPageProps {
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
-  const [selectedRole, setSelectedRole] = useState<UserRole>('Candidate');
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+
+  const handleLogin = () => {
+    if (selectedRole) {
+      onLogin(selectedRole);
+    }
+  };
 
   return (
-    <div className="min-h-screen w-full bg-slate-100 text-slate-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center animate-fade-in">
-        <div className="flex justify-center items-center gap-2 mb-4">
-            <LandingMicrophoneIcon className="w-8 h-8 text-blue-600" />
-            <h1 className="text-2xl font-bold">AI Recruiting Agent</h1>
+    <div className="min-h-screen w-full bg-[#0f172a] text-white flex flex-col items-center justify-center p-4 animate-fade-in">
+      <div className="text-center w-full max-w-lg mx-auto">
+        <div className="inline-block p-4 bg-blue-500/10 rounded-full mb-6 ring-1 ring-blue-500/20">
+          <RobotIcon className="w-12 h-12 text-blue-400" />
         </div>
-        <div className="my-6"><InterviewIllustration className="w-48 h-auto mx-auto"/></div>
-        <h2 className="text-2xl font-semibold mb-2">Welcome Back!</h2>
-        <p className="text-slate-500 mb-4">Please select your role to continue.</p>
-        <div className="flex bg-slate-200 p-1 rounded-full mb-8 w-full max-w-sm mx-auto">
-            <button
-                onClick={() => setSelectedRole('Candidate')}
-                className={`w-1/2 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${selectedRole === 'Candidate' ? 'bg-white text-blue-600 shadow' : 'text-slate-500 hover:bg-slate-300/70'}`}
-            >
-                I am a Candidate
-            </button>
-            <button
-                onClick={() => setSelectedRole('HR')}
-                className={`w-1/2 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${selectedRole === 'HR' ? 'bg-white text-blue-600 shadow' : 'text-slate-500 hover:bg-slate-300/70'}`}
-            >
-                I am an HR Professional
-            </button>
+
+        <h1 className="text-4xl md:text-5xl font-bold mb-3">Welcome</h1>
+        <p className="text-md text-slate-400 mb-8">Please select your role and sign in to continue.</p>
+
+        {/* Role Selection */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-8">
+          <button
+            onClick={() => setSelectedRole('Candidate')}
+            className={`group bg-slate-800/50 hover:bg-slate-700/60 border rounded-xl p-6 text-left transition-all duration-300 flex items-center gap-4
+              ${selectedRole === 'Candidate' ? 'border-blue-500 ring-2 ring-blue-500/50' : 'border-slate-700'}`}
+          >
+            <UserCircleIcon className="w-8 h-8 text-slate-400 group-hover:text-blue-400 transition-colors" />
+            <div><h2 className="text-lg font-semibold text-slate-100">I'm a Candidate</h2></div>
+          </button>
+          <button
+            onClick={() => setSelectedRole('HR')}
+            className={`group bg-slate-800/50 hover:bg-slate-700/60 border rounded-xl p-6 text-left transition-all duration-300 flex items-center gap-4
+              ${selectedRole === 'HR' ? 'border-blue-500 ring-2 ring-blue-500/50' : 'border-slate-700'}`}
+          >
+            <BuildingOfficeIcon className="w-8 h-8 text-slate-400 group-hover:text-blue-400 transition-colors" />
+            <div><h2 className="text-lg font-semibold text-slate-100">I'm an HR Professional</h2></div>
+          </button>
         </div>
-        <div className="space-y-4">
+
+        {/* Social Login Buttons */}
+        <div className={`transition-opacity duration-500 ${selectedRole ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
+          <div className="grid grid-cols-1 gap-4">
             <button
-              onClick={() => onLogin(selectedRole)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all flex items-center justify-center gap-3 text-lg"
+              onClick={handleLogin}
+              disabled={!selectedRole}
+              className="w-full flex items-center justify-center gap-3 bg-slate-800 text-white font-semibold py-3 rounded-lg hover:bg-slate-700 transition-colors border border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <MicrosoftIcon className="w-6 h-6" />
-              <span>Login with Microsoft</span>
+              <MicrosoftIcon className="w-5 h-5" />
+              Login with Microsoft
             </button>
-            <button
-              onClick={() => onLogin(selectedRole)}
-              className="w-full bg-white hover:bg-gray-100 text-slate-700 font-semibold py-3 px-6 rounded-lg transition-all flex items-center justify-center gap-3 text-lg border border-slate-300"
-            >
-              <GoogleIcon className="w-6 h-6" />
-              <span>Login with Google</span>
-            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -524,7 +517,6 @@ const App: React.FC = () => {
                         setJobDescription={setJobDescription}
                         onStart={handleStartInterview}
                         isLoading={isLoading}
-                        // Fix: Corrected typo from onFilechange to onFileChange.
                         onFileChange={handleFileChange}
                         resumeFileName={resumeFileName}
                         onRemoveResume={() => { setResumeFileName(null); setResumeText(''); }}
