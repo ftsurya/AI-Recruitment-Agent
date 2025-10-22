@@ -1,4 +1,5 @@
 import { Type } from "@google/genai";
+import { InterviewTemplate } from './types';
 
 export const INTERVIEWER_PERSONA = () => `You are Alex, a friendly, professional, and highly intelligent AI interviewer from 'NexusAI Corp'. Your goal is to conduct a structured interview to assess a candidate's suitability for a role based on their resume and the provided job description. You must strictly follow the 6-section interview flow.
 
@@ -59,7 +60,7 @@ export const GREETING_PROMPT = () => `You are Alex, an AI interviewer. Your firs
 4.  **First Question:** You must ask the candidate for a detailed introduction. For example: "Hello {candidate_name}, welcome to the interview! I'm excited to speak with you today. To start, could you please introduce yourself in detail? I'd love to hear about your native place, educational background, any project experience, and your overall professional journey so far."
 `;
 
-export const NEXT_STEP_PROMPT = () => `Analyze the candidate's latest response in the context of our chat history, the job description, and their resume. You must strictly follow the 6-section interview flow. Determine the current section, provide feedback on their last answer, and then ask the next appropriate question to move the interview forward.
+export const NEXT_STEP_PROMPT = () => `Analyze the candidate's latest response in the context of our chat history, the job description, their resume, and the provided list of extracted skills. You must strictly follow the 6-section interview flow. Determine the current section, provide feedback on their last answer, and then ask the next appropriate question to move the interview forward.
 
 **INTERVIEW FLOW (IN ORDER):**
 1.  **Introduction of the Candidate:** The first question. Once answered, move to section 2.
@@ -71,34 +72,54 @@ export const NEXT_STEP_PROMPT = () => `Analyze the candidate's latest response i
 
 **YOUR TASK:**
 1.  **Analyze History:** Review the chat history to determine which section was just completed.
-2.  **Transition to Next Section:** Ask a question for the *next* section in the flow. For example, if they just finished their introduction (Section 1), your next question must be about Technical Skills (Section 2).
+2.  **Transition to Next Section:** Ask a question for the *next* section in the flow. For example, if they just finished their introduction (Section 1), your next question must be about Technical Skills (Section 2). **When asking about technical skills, probe their proficiency on specific skills that were extracted from their resume to verify their expertise.**
 3.  **Handle Coding Challenge (Section 3):** When you reach this section, set \`is_coding_challenge\` to \`true\`.
 4.  **Handle Final Section (Section 6):** When you ask the salary expectation question, this is the last question of the interview.
 5.  **End the Interview:** After analyzing the candidate's answer to the salary question, you must set \`interview_is_over\` to \`true\` in your response. Your \`nextQuestion.question_text\` should be a simple closing statement like, "Thank you for sharing that. This concludes our interview. We will be in touch with the next steps shortly. Have a great day!"
 `;
 
-export const FINAL_REPORT_PROMPT = `The interview is now complete. Based on the entire chat history, the job description, the candidate's resume, and any Python code they submitted, generate a comprehensive final report.
+export const FINAL_REPORT_PROMPT = `The interview is now complete. Based on the entire chat history, the job description, the candidate's resume, the list of skills extracted from their resume, and any Python code they submitted, generate a comprehensive final report.
 
 **GUIDELINES FOR REALISTIC OVERALL SCORE:**
 Calculate a realistic 'overall_score' (0-100) based on a weighted analysis of the candidate's performance across these key areas, which map to the interview sections:
-1.  **Technical Skills & Job Fit (40% weight):** Assessed in Section 2.
+1.  **Technical Skills & Job Fit (40% weight):** Assessed in Section 2. Your assessment here must be heavily influenced by how well the candidate demonstrated proficiency in the key skills extracted from their resume. A mismatch between claimed skills and demonstrated ability should significantly impact the score.
 2.  **Problem-Solving & Coding (30% weight):** Assessed in Section 3.
 3.  **Communication & Professional Tone (15% weight):** Assessed throughout (Section 5).
 4.  **Experience & Project Knowledge (15% weight):** Assessed in Section 1 & 4.
 
 The 'star_rating' MUST be a direct conversion: (overall_score / 20). All written feedback (strengths, weaknesses, justification) must align with this score.
 
+**GUIDELINES FOR DETAILED FEEDBACK (Strengths/Weaknesses):**
+- **Strengths:** If the candidate effectively demonstrated strong knowledge of skills listed on their resume, highlight this as a key strength. For example: "Demonstrated strong, hands-on knowledge of Python and Pandas, which were key skills listed on their resume."
+- **Weaknesses:** If the candidate struggled to answer questions about skills they claimed on their resume, this is a significant red flag and must be explicitly mentioned as a major weakness. For example: "Despite listing React on their resume, the candidate was unable to answer basic questions about component lifecycle, indicating a potential gap between claimed and actual knowledge."
+
 **GUIDELINES FOR SUGGESTED SALARY (STRICTLY FOLLOW):**
-Your most important task here is to generate a 'salary_range' based on the candidate's experience level, following these exact rules.
-1.  **Determine Experience Level:** First, analyze the candidate's resume and interview responses to set the 'inferred_experience_level'. You must classify them into ONE of the following categories: 'Fresher', 'Upper-middle fresher', 'Top-level fresher', '2-4 years of experience', or 'Senior-level candidate'.
-2.  **Set Salary Range (Exact Rules):** Based on your classification, set the 'salary_range' field to one of these exact string values:
-    - If 'Fresher': "1 lakh per year"
-    - If 'Upper-middle fresher': "2 lakh per year"
-    - If 'Top-level fresher': "4 lakh per year"
-    - If '2-4 years of experience': A single value chosen from the range of 10-15 lakh per year (e.g., "12 lakh per year").
-    - If 'Senior-level candidate': A single value chosen from the range of 15-20 lakh per year (e.g., "18 lakh per year").
-3.  **Justify Salary:** The 'justification' field should explain why you chose this salary, referencing their experience level and comparing it to their stated salary expectation from the interview.
-4.  **Breakdown:** Provide a logical breakdown for base, bonus, and benefits based on the determined salary range.
+Your most important task here is to generate a 'salary_range' and provide a negotiation-focused 'justification' based on the candidate's performance, experience level, and stated expectations.
+
+1.  **Determine Experience Level & Company's Budget Range:**
+    - First, analyze the candidate's resume and interview responses to set the 'inferred_experience_level'. Classify them into ONE of the following: 'Fresher', 'Upper-middle fresher', 'Top-level fresher', '2-4 years of experience', or 'Senior-level candidate'.
+    - Based on this level, determine the company's internal budget range for this role:
+        - 'Fresher': "1 lakh per year"
+        - 'Upper-middle fresher': "2 lakh per year"
+        - 'Top-level fresher': "4 lakh per year"
+        - '2-4 years of experience': A range between 10-15 lakh per year.
+        - 'Senior-level candidate': A range between 15-20 lakh per year.
+
+2.  **Analyze Candidate's Expectation:**
+    - From the interview transcript, identify the candidate's stated salary expectation.
+
+3.  **Negotiate and Set Final Salary Range:**
+    - Compare the candidate's expectation with the company's budget range for their experience level.
+    - Your final output for 'salary_range' should be a single value (e.g., "12 lakh per year"), not a range string like "10-15 lakh per year".
+    - **If expectation is WITHIN budget range:** Suggest a figure that meets their expectation. Your justification should state that their expectation is reasonable and aligns with the company's valuation for the role.
+    - **If expectation is BELOW budget range:** Suggest a figure that meets their expectation but is at the lower end of the company's budget. Justify this as a fair offer that respects their request.
+    - **If expectation is ABOVE budget range:** This requires negotiation.
+        - If slightly above (e.g., within 10%): Offer the top of the company's budget range. Justify it as a strong and competitive offer that acknowledges their skills while adhering to the role's compensation structure.
+        - If significantly above: Offer the top of the company's budget range. The justification must politely state that while their expectation is understood, the proposed salary is the maximum for this role and is highly competitive based on market standards and their assessed skill level.
+
+4.  **Justify Salary:** The 'justification' field must clearly explain the reasoning behind your suggested salary, referencing the negotiation between their expectation and the company's budget.
+
+5.  **Breakdown:** Provide a logical breakdown for base, bonus, and benefits based on the determined final salary.
 
 **FINAL RECOMMENDATION:**
 - Use 'Strong Hire' or 'Hire' for strong candidates.
@@ -134,6 +155,14 @@ export const COMMUNICATION_EMAIL_PROMPT = (emailType: 'NEXT_STEPS' | 'REJECTION'
 
 Now, analyze the provided interview report and generate the email. Respond ONLY with a JSON object containing "subject" and "body".`;
 
+export const EXTRACT_SKILLS_PROMPT = `Analyze the provided resume text and extract a list of key technical skills, programming languages, frameworks, tools, and technologies mentioned. Focus on concrete, technical abilities. Return the result ONLY as a JSON array of strings.`;
+
+
+export const extractSkillsSchema = {
+    type: Type.ARRAY,
+    description: "A list of extracted technical skills.",
+    items: { type: Type.STRING }
+};
 
 export const responseAnalysisSchema = {
     type: Type.OBJECT,
@@ -219,3 +248,18 @@ export const communicationEmailSchema = {
         body: { type: Type.STRING, description: "The full email body content, including greetings and sign-off." }
     }
 };
+
+export const DEFAULT_TEMPLATES: Omit<InterviewTemplate, 'id'>[] = [
+    {
+        name: 'ML Data Associate (Amazon)',
+        companyName: 'Amazon',
+        jobTitle: 'ML Data Associate',
+        jobDescription: `Job Summary:\nAs a Machine Learning Data Associate, you will be responsible for the ground truth data that powers Amazon's machine learning models. You will work with a variety of data types, including text, images, and audio, to label, annotate, and verify data quality.\n\nKey Responsibilities:\n- Perform data labeling and annotation tasks with high accuracy.\n- Follow established guidelines and procedures for data processing.\n- Identify and report issues with data, tools, or processes.\n- Collaborate with team members to meet project deadlines and quality standards.`
+    },
+    {
+        name: 'Data Scientist (Cognizant)',
+        companyName: 'Cognizant',
+        jobTitle: 'Data Scientist',
+        jobDescription: `Position Description:\nCognizant is looking for a Data Scientist to join our team. The ideal candidate will have a passion for data and a strong background in statistical analysis, machine learning, and data visualization. You will work on complex business problems and be responsible for developing and deploying data-driven solutions.\n\nResponsibilities:\n- Analyze large, complex datasets to identify trends and patterns.\n- Build and validate predictive models using machine learning techniques.\n- Create data visualizations and reports to communicate findings to stakeholders.\n- Work closely with business and engineering teams to implement solutions.`
+    }
+];

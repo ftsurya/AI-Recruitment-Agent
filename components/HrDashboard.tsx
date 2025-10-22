@@ -157,6 +157,17 @@ const CandidateProfileModal: React.FC<{ record: HistoricalInterviewRecord, onClo
                         </div>
                     </div>
                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {record.extractedSkills && record.extractedSkills.length > 0 && (
+                            <div className="lg:col-span-2">
+                                <InfoCard title="Key Skills from Resume">
+                                    <div className="flex flex-wrap gap-2">
+                                        {record.extractedSkills.map((skill, i) => (
+                                            <span key={i} className="bg-blue-500/20 text-blue-300 px-2 py-1 text-xs rounded-md">{skill}</span>
+                                        ))}
+                                    </div>
+                                </InfoCard>
+                            </div>
+                        )}
                         <InfoCard title="Strengths">
                             <div className="flex flex-wrap gap-2">
                                 {feedback.strengths.map((s, i) => <Pill key={i} text={s} color="green"/>)}

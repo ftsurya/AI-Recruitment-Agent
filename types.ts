@@ -26,6 +26,13 @@ export interface User {
   role: 'Candidate' | 'HR';
 }
 
+export interface MagicToken {
+  token: string;
+  email: string;
+  role: User['role'];
+  expiresAt: number;
+}
+
 export interface ResponseAnalysis {
   answer_score: number;
   comments: string;
@@ -93,6 +100,7 @@ export interface HistoricalInterviewRecord {
   candidateEmail?: string;
   resumeFileName: string;
   resumeText?: string;
+  extractedSkills?: string[];
   jobDescriptionSnippet: string;
   report: FinalReport;
   status: CandidateStatus;

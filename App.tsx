@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef, useReducer } from 'react';
-import { ViewState, InterviewType, ChatMessage, FinalReport, HistoricalInterviewRecord, CandidateStatus, TranscriptEntry, InterviewTemplate, User } from './types';
+import React, { useState, useCallback, useRef, useReducer, useEffect } from 'react';
+import { ViewState, InterviewType, ChatMessage, FinalReport, HistoricalInterviewRecord, CandidateStatus, TranscriptEntry, InterviewTemplate, User, MagicToken } from './types';
 import { aiRecruiterService } from './services/geminiService';
 import SetupScreen from './components/SetupScreen';
 import InterviewScreen from './components/InterviewScreen';
@@ -9,9 +9,11 @@ import ResultsScreen from './components/ResultsScreen';
 import { HrDashboard } from './components/HrDashboard';
 import useLocalStorage from './hooks/useLocalStorage';
 import ErrorDisplay from './components/ErrorDisplay';
-import { DocumentTextIcon, ChatBubbleLeftRightIcon, ShieldCheckIcon, CodeBracketIcon, GaugeIcon, ComputerDesktopIcon, BeakerIcon, RobotIcon, UserCircleIcon, BuildingOfficeIcon, MicrosoftIcon } from './components/icons';
+import { DocumentTextIcon, ChatBubbleLeftRightIcon, ShieldCheckIcon, CodeBracketIcon, GaugeIcon, ComputerDesktopIcon, BeakerIcon, RobotIcon, UserCircleIcon, BuildingOfficeIcon, EnvelopeIcon, CheckCircleIcon, SendIcon } from './components/icons';
 import DarkVeilBackground from './components/DarkVeilBackground';
 import ScrollFloatText from './components/ScrollFloatText';
+import Spinner from './components/Spinner';
+import { DEFAULT_TEMPLATES } from './constants';
 
 interface MediaStreams {
     camera: MediaStream;
@@ -217,14 +219,94 @@ interface LoginPageProps {
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLinkSent, setIsLinkSent] = useState(false);
+  const [loginMessage, setLoginMessage] = useState('');
 
-  const handleLogin = () => {
-    if (selectedRole === 'Candidate') {
-      onLogin({ name: 'Candidate', role: 'Candidate' });
-    } else if (selectedRole === 'HR') {
-      onLogin({ name: 'HR', role: 'HR' });
-    }
+  const handleRoleSelect = (role: UserRole) => {
+    setSelectedRole(role);
+    setEmail('');
+    setIsLinkSent(false);
+    setIsLoading(false);
+    setLoginMessage('');
   };
+
+  const handleSendLink = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !selectedRole) return;
+    
+    setIsLoading(true);
+    setLoginMessage('');
+
+    // Simulate sending an email and generating a token
+    setTimeout(() => {
+        const token = crypto.randomUUID();
+        const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minute expiry
+
+        const magicToken: MagicToken = {
+            token,
+            email,
+            role: selectedRole,
+            expiresAt
+        };
+
+        // In a real app, an email would be sent. Here we use localStorage to simulate the backend.
+        localStorage.setItem('magic-token', JSON.stringify(magicToken));
+
+        setIsLoading(false);
+        setIsLinkSent(true);
+        setLoginMessage(`For this demo, a magic link has been generated for ${email}. Click below to log in.`);
+    }, 1500);
+  };
+  
+  const handleLoginWithToken = () => {
+    setIsLoading(true);
+    setLoginMessage('');
+
+    // Simulate delay for validating the token
+    setTimeout(() => {
+        const tokenData = localStorage.getItem('magic-token');
+        if (!tokenData) {
+            setLoginMessage('Login failed. No valid login link found. Please request a new one.');
+            setIsLoading(false);
+            setIsLinkSent(false);
+            return;
+        }
+
+        try {
+            const magicToken: MagicToken = JSON.parse(tokenData);
+            if (Date.now() > magicToken.expiresAt) {
+                setLoginMessage('Your login link has expired. Please request a new one.');
+                localStorage.removeItem('magic-token');
+                setIsLoading(false);
+                setIsLinkSent(false);
+                return;
+            }
+            
+            // Success
+            const name = magicToken.role === 'HR' ? 'HR Professional' : (magicToken.email.split('@')[0] || 'Candidate');
+            onLogin({ name, role: magicToken.role });
+            localStorage.removeItem('magic-token');
+
+        } catch (error) {
+            setLoginMessage('An error occurred during login. Please try again.');
+            localStorage.removeItem('magic-token');
+            setIsLoading(false);
+            setIsLinkSent(false);
+        }
+    }, 1000);
+  };
+
+  const handleBackToRoleSelection = () => {
+    setSelectedRole(null);
+    setEmail('');
+    setIsLinkSent(false);
+    setLoginMessage('');
+  };
+
+  const isFormVisible = selectedRole !== null;
+  const isSendButtonDisabled = !email.trim() || isLoading;
 
   return (
     <div className="min-h-screen w-full bg-transparent text-white flex flex-col items-center justify-center p-4 animate-fade-in">
@@ -234,12 +316,18 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         </div>
 
         <h1 className="text-4xl md:text-5xl font-bold mb-3">Welcome</h1>
-        <p className="text-md text-slate-400 mb-8">Please select your role and sign in to continue.</p>
+        <p className="text-md text-slate-400 mb-8 h-5">
+          {loginMessage || (isFormVisible 
+            ? `Enter your email to get a login link as a ${selectedRole}.`
+            : 'Please select your role to continue.'
+          )}
+        </p>
 
         {/* Role Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-8">
+        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-8 transition-opacity duration-500 ${isFormVisible ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
           <button
-            onClick={() => setSelectedRole('Candidate')}
+            onClick={() => handleRoleSelect('Candidate')}
+            disabled={isFormVisible}
             className={`group bg-white/5 backdrop-blur-lg hover:bg-white/10 border rounded-2xl p-6 text-left transition-all duration-300 flex items-center gap-4
               ${selectedRole === 'Candidate' ? 'border-blue-400 ring-2 ring-blue-400/50' : 'border-white/10'}`}
           >
@@ -247,7 +335,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <div><h2 className="text-lg font-semibold text-slate-100">I'm a Candidate</h2></div>
           </button>
           <button
-            onClick={() => setSelectedRole('HR')}
+            onClick={() => handleRoleSelect('HR')}
+            disabled={isFormVisible}
             className={`group bg-white/5 backdrop-blur-lg hover:bg-white/10 border rounded-2xl p-6 text-left transition-all duration-300 flex items-center gap-4
               ${selectedRole === 'HR' ? 'border-blue-400 ring-2 ring-blue-400/50' : 'border-white/10'}`}
           >
@@ -256,27 +345,56 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           </button>
         </div>
 
-        {/* Social Login Buttons */}
-        <div className="h-14 flex items-center justify-center">
-          {selectedRole === 'Candidate' && (
-            <button
-              onClick={handleLogin}
-              className="w-full flex items-center justify-center gap-3 bg-white/10 backdrop-blur-md text-white font-semibold py-3 rounded-lg hover:bg-white/20 transition-colors border border-white/20 animate-fade-in"
-            >
-              <MicrosoftIcon className="w-5 h-5" />
-              Login as Candidate with Microsoft (ID 1)
-            </button>
-          )}
-          {selectedRole === 'HR' && (
-            <button
-              onClick={handleLogin}
-              className="w-full flex items-center justify-center gap-3 bg-white/10 backdrop-blur-md text-white font-semibold py-3 rounded-lg hover:bg-white/20 transition-colors border border-white/20 animate-fade-in"
-            >
-              <MicrosoftIcon className="w-5 h-5" />
-              Login as HR Professional with Microsoft (ID 2)
-            </button>
-          )}
+        {/* Login Form / Success Message */}
+        <div className="h-48 flex items-center justify-center">
+        {isFormVisible && (
+            isLinkSent ? (
+                <div className="text-center animate-fade-in w-full">
+                    <CheckCircleIcon className="w-16 h-16 text-green-400 mx-auto mb-4"/>
+                    <h2 className="text-2xl font-semibold text-slate-200 mb-6">Link Generated!</h2>
+                    <button
+                        onClick={handleLoginWithToken}
+                        disabled={isLoading}
+                        className={`w-full font-semibold py-3 rounded-lg transition-all duration-300 border flex items-center justify-center ${
+                           isLoading 
+                           ? 'bg-slate-700/50 border-slate-600 text-slate-500 cursor-not-allowed'
+                           : 'bg-green-600/40 backdrop-blur-md border-green-400/60 hover:bg-green-500/60 text-white shadow-lg shadow-green-500/30'
+                        }`}
+                    >
+                         {isLoading ? <Spinner size="sm" /> : 'Log In (from simulated email)'}
+                    </button>
+                </div>
+            ) : (
+                <form onSubmit={handleSendLink} className="w-full animate-slide-in-up">
+                    <div className="relative mb-6">
+                        <EnvelopeIcon className="w-5 h-5 text-slate-400 absolute top-1/2 left-4 -translate-y-1.2/2" />
+                        <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)}
+                            className="w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg py-3 pl-12 pr-4 focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-200 placeholder-slate-500" required />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isSendButtonDisabled}
+                      className={`w-full font-semibold py-3 rounded-lg transition-all duration-300 border flex items-center justify-center gap-2 ${
+                        !isSendButtonDisabled
+                          ? 'bg-blue-600/40 backdrop-blur-md border-blue-400/60 hover:bg-blue-500/60 text-white shadow-lg shadow-blue-500/30'
+                          : 'bg-slate-700/50 border-slate-600 text-slate-500 cursor-not-allowed'
+                      }`}
+                    >
+                      {isLoading ? <Spinner size="sm" /> : <>Send Login Link <SendIcon className="w-4 h-4" /></>}
+                    </button>
+                </form>
+            )
+        )}
         </div>
+        
+        {isFormVisible && (
+             <button
+                onClick={handleBackToRoleSelection}
+                className="mt-4 text-sm text-slate-400 hover:text-white transition-colors"
+            >
+                &larr; Back to role selection
+            </button>
+        )}
       </div>
     </div>
   );
@@ -337,8 +455,10 @@ const App: React.FC = () => {
     const [resumeText, setResumeText] = useState<string>('');
     const [resumeFileName, setResumeFileName] = useState<string | null>(null);
     const [interviewType, setInterviewType] = useState<InterviewType>(InterviewType.CHAT);
+    const [extractedSkills, setExtractedSkills] = useState<string[]>([]);
     
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [isExtractingSkills, setIsExtractingSkills] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
     const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -354,6 +474,18 @@ const App: React.FC = () => {
 
     const [history, setHistory] = useLocalStorage<HistoricalInterviewRecord[]>('interviewHistory', []);
     const [templates, setTemplates] = useLocalStorage<InterviewTemplate[]>('interviewTemplates', []);
+    const [templatesInitialized, setTemplatesInitialized] = useLocalStorage('templatesInitialized', false);
+
+    useEffect(() => {
+        if (!templatesInitialized) {
+            const initialTemplatesWithIds: InterviewTemplate[] = DEFAULT_TEMPLATES.map((t, index) => ({
+                ...t,
+                id: `default-${Date.now()}-${index}`
+            }));
+            setTemplates(initialTemplatesWithIds);
+            setTemplatesInitialized(true);
+        }
+    }, [templatesInitialized, setTemplates, setTemplatesInitialized]);
     
     const stopMediaStreams = useCallback(() => {
         if (mediaStreamsRef.current) {
@@ -372,6 +504,7 @@ const App: React.FC = () => {
         setCandidateEmail('');
         setResumeText('');
         setResumeFileName(null);
+        setExtractedSkills([]);
         setChatHistory([]);
         setFinalReport(null);
         setError(null);
@@ -426,10 +559,28 @@ const App: React.FC = () => {
         const file = event.target.files?.[0];
         if (file) {
             setResumeFileName(file.name);
+            setExtractedSkills([]);
+            setIsExtractingSkills(true);
+            setError(null);
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 const text = e.target?.result as string;
                 setResumeText(text || "File content could not be read.");
+                if (text) {
+                    try {
+                        const skills = await aiRecruiterService.extractSkillsFromResume(text);
+                        setExtractedSkills(skills);
+                    } catch (err: any) {
+                        setError(`Failed to extract skills from resume: ${err.message}. Please try another file.`);
+                        setResumeFileName(null);
+                        setResumeText('');
+                        setExtractedSkills([]);
+                    } finally {
+                        setIsExtractingSkills(false);
+                    }
+                } else {
+                    setIsExtractingSkills(false);
+                }
             };
             reader.readAsText(file);
         }
@@ -465,123 +616,150 @@ const App: React.FC = () => {
                 mediaStreamsRef.current = streams;
                 setMediaStreams(streams);
                 dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.LIVE });
-            } catch (err) {
-                console.error("Failed to get media devices.", err);
-                setError("Camera, microphone, and screen sharing access is required for a live interview. Please enable permissions and try again.");
             } finally {
                 setIsLoading(false);
             }
         }
     };
-
+    
     const handleSendMessage = async (message: string) => {
-        setIsCandidateDeeplyIdle(false); // User is active, hide modal.
-        const newUserMessage: ChatMessage = { role: 'user', content: message };
+        if (isChatTerminated) return;
         
-        const proctoringResult = await aiRecruiterService.analyzeTextResponse(message);
-        if (proctoringResult.cheating_detected) {
-            newUserMessage.proctoringResult = { flagged: true, reason: proctoringResult.reason };
-            const newWarningCount = chatWarningCount + 1;
-            setChatWarningCount(newWarningCount);
-            
-            if (newWarningCount >= 2) {
-                setChatHistory(prev => [...prev, newUserMessage]);
-                setIsChatTerminated(true);
-                return;
-            }
-        }
-
-        const updatedChatHistory = [...chatHistory, newUserMessage];
-        setChatHistory(updatedChatHistory);
         setIsAiResponding(true);
+        setError(null);
+        
+        const isCodingSubmission = chatHistory[chatHistory.length - 1]?.is_coding_challenge;
+        const codeSubmission = isCodingSubmission ? message : undefined;
+        
+        const newUserMessage: ChatMessage = { role: 'user', content: message };
+        const currentChatHistory = [...chatHistory, newUserMessage];
+        setChatHistory(currentChatHistory);
+
+        // Analyze user response for cheating
+        try {
+            const proctoringResult = await aiRecruiterService.analyzeTextResponse(message);
+            if (proctoringResult.cheating_detected) {
+                const newWarningCount = chatWarningCount + 1;
+                setChatWarningCount(newWarningCount);
+                if (newWarningCount >= 2) {
+                     setIsChatTerminated(true);
+                     setIsAiResponding(false);
+                     return;
+                }
+                
+                setChatHistory(prev => {
+                    const lastMessage = prev[prev.length - 1];
+                    if (lastMessage.role === 'user') {
+                        return [
+                            ...prev.slice(0, -1),
+                            { ...lastMessage, proctoringResult: { flagged: true, reason: proctoringResult.reason } }
+                        ];
+                    }
+                    return prev;
+                });
+            }
+        } catch (e: any) {
+            console.error("Proctoring analysis failed:", e.message);
+        }
 
         const jobContext = `Job Title: ${jobTitle}\n\n${jobDescription}`;
 
         try {
-            const { analysis, nextQuestion, interview_is_over } = await aiRecruiterService.getNextStep(updatedChatHistory, jobContext, resumeText);
-            
-            const lastUserMessageIndex = updatedChatHistory.length - 1;
-            const historyWithAnalysis = [...updatedChatHistory];
-            historyWithAnalysis[lastUserMessageIndex].analysis = analysis;
+            const nextStep = await aiRecruiterService.getNextStep(currentChatHistory, jobContext, resumeText, extractedSkills);
 
-            const newAiMessage: ChatMessage = { 
-                role: 'ai', 
-                content: nextQuestion.question_text,
-                is_coding_challenge: nextQuestion.is_coding_challenge,
+            // Update last user message with analysis
+            setChatHistory(prev => {
+                const lastMessage = prev[prev.length - 1];
+                if(lastMessage.role === 'user') {
+                   return [...prev.slice(0, -1), { ...lastMessage, analysis: nextStep.analysis }];
+                }
+                return prev;
+            });
+
+            const aiResponse: ChatMessage = {
+                role: 'ai',
+                content: nextStep.nextQuestion.question_text,
+                is_coding_challenge: nextStep.nextQuestion.is_coding_challenge
             };
-            const finalHistory = [...historyWithAnalysis, newAiMessage];
-            setChatHistory(finalHistory);
+            setChatHistory(prev => [...prev, aiResponse]);
 
-            if (interview_is_over) {
-                await generateAndSaveReport(finalHistory, message);
+            if (nextStep.interview_is_over) {
+                setIsLoading(true);
+                dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.RESULTS });
+                const finalHistory = [...currentChatHistory, aiResponse];
+                const report = await aiRecruiterService.generateFinalReport(finalHistory, jobContext, resumeText, codeSubmission, extractedSkills);
+                setFinalReport(report);
+
+                 // Save to history
+                const newRecord: HistoricalInterviewRecord = {
+                    id: new Date().toISOString(),
+                    date: new Date().toLocaleDateString(),
+                    jobTitle: jobTitle,
+                    candidateName: currentUser?.name || 'Candidate',
+                    candidateEmail: candidateEmail,
+                    resumeFileName: resumeFileName || 'N/A',
+                    jobDescriptionSnippet: jobDescription.substring(0, 100) + '...',
+                    report: report,
+                    status: CandidateStatus.PENDING,
+                    notes: '',
+                    resumeText: resumeText,
+                    extractedSkills: extractedSkills,
+                };
+                setHistory(prev => [newRecord, ...prev]);
+
+                setIsLoading(false);
             }
-
         } catch (e: any) {
             setError(e.message);
             console.error(e);
-            const errorMessage: ChatMessage = { role: 'ai', content: "I'm sorry, I encountered an error. Let's try restarting the interview." };
-            setChatHistory(prev => [...prev, errorMessage]);
-        } finally {
-            if (chatHistory.length > 2) { // Don't stop responding if it's not the end
-                const lastAIMessage = chatHistory[chatHistory.length - 1];
-                 if (lastAIMessage && !lastAIMessage.isNudge) {
-                    setIsAiResponding(false);
-                 }
-            }
-        }
-    };
-
-    const generateAndSaveReport = async (
-        finalChatHistory: ChatMessage[], 
-        codeSubmission?: string, 
-        videoUrl?: string,
-        liveTranscript?: TranscriptEntry[]
-    ) => {
-        try {
-            dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.RESULTS }); 
-            const lastAiMessage = finalChatHistory.filter(m => m.role === 'ai').pop();
-            const submission = lastAiMessage?.is_coding_challenge ? codeSubmission : undefined;
-            
-            const jobContext = `Job Title: ${jobTitle}\n\n${jobDescription}`;
-
-            const report = await aiRecruiterService.generateFinalReport(finalChatHistory, jobContext, resumeText, submission);
-            setFinalReport(report);
-            
-            const transcriptToSave = liveTranscript || finalChatHistory.map(m => ({ speaker: m.role, text: m.content }));
-            
-             const newRecord: HistoricalInterviewRecord = {
-                id: new Date().toISOString(),
-                date: new Date().toISOString(),
-                jobTitle: jobTitle,
-                candidateName: currentUser?.name,
-                candidateEmail: candidateEmail,
-                resumeFileName: resumeFileName || "Unknown",
-                resumeText: resumeText,
-                jobDescriptionSnippet: jobDescription.substring(0, 100) + "...",
-                report: report,
-                status: CandidateStatus.PENDING,
-                videoRecordingUrl: videoUrl,
-                transcript: transcriptToSave,
-            };
-            setHistory(prev => [...prev, newRecord]);
-
-        } catch (e: any) {
-            setError(e.message);
-            console.error(e);
-            dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.INTERVIEW }); 
         } finally {
             setIsAiResponding(false);
         }
-    }
+    };
 
     const handleEndLiveInterview = async (transcript: TranscriptEntry[], code: string, videoUrl: string) => {
         stopMediaStreams();
-        const chatLikeTranscript: ChatMessage[] = transcript.map(t => ({ role: t.speaker, content: t.text }));
-        await generateAndSaveReport(chatLikeTranscript, code, videoUrl, transcript);
-    }
-    
-    const handleLogin = (user: User) => {
-      dispatch({ type: 'LOGIN', payload: user });
+        dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.RESULTS });
+        setIsLoading(true);
+        setError(null);
+        
+        const jobContext = `Job Title: ${jobTitle}\n\n${jobDescription}`;
+
+        // Convert transcript to chat history format for report generation
+        const chatHistoryForReport: ChatMessage[] = transcript.map(t => ({
+            role: t.speaker,
+            content: t.text
+        }));
+
+        try {
+            const report = await aiRecruiterService.generateFinalReport(chatHistoryForReport, jobContext, resumeText, code, extractedSkills);
+            setFinalReport(report);
+
+            // Save to history
+            const newRecord: HistoricalInterviewRecord = {
+                id: new Date().toISOString(),
+                date: new Date().toLocaleDateString(),
+                jobTitle: jobTitle,
+                candidateName: currentUser?.name || 'Candidate',
+                candidateEmail: candidateEmail,
+                resumeFileName: resumeFileName || 'N/A',
+                jobDescriptionSnippet: jobDescription.substring(0, 100) + '...',
+                report: report,
+                status: CandidateStatus.PENDING,
+                notes: '',
+                resumeText: resumeText,
+                extractedSkills: extractedSkills,
+                videoRecordingUrl: videoUrl,
+                transcript: transcript,
+            };
+            setHistory(prev => [newRecord, ...prev]);
+
+        } catch (e: any) {
+            setError(e.message);
+            console.error(e);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleLoadTemplate = (template: InterviewTemplate) => {
@@ -590,33 +768,39 @@ const App: React.FC = () => {
         setJobDescription(template.jobDescription);
     };
 
-    // --- Template CRUD Handlers ---
-    const handleAddTemplate = (template: Omit<InterviewTemplate, 'id'>) => {
-        const newTemplate = { ...template, id: new Date().toISOString() };
-        setTemplates(prev => [...prev, newTemplate]);
-    };
-
-    const handleUpdateTemplate = (updatedTemplate: InterviewTemplate) => {
-        setTemplates(prev => prev.map(t => t.id === updatedTemplate.id ? updatedTemplate : t));
-    };
-
-    const handleDeleteTemplate = (templateId: string) => {
-        setTemplates(prev => prev.filter(t => t.id !== templateId));
-    };
-
-
-    let currentView;
-    switch (viewState) {
-        case ViewState.LANDING:
-            currentView = <LandingPage onLoginClick={() => dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.LOGIN })} />;
-            break;
-        case ViewState.LOGIN:
-            currentView = <LoginPage onLogin={handleLogin} />;
-            break;
-        case ViewState.INTERVIEW:
-            currentView = <InterviewScreen 
-                        chatHistory={chatHistory} 
-                        onSendMessage={handleSendMessage} 
+    const renderContent = () => {
+        switch (viewState) {
+            case ViewState.LANDING:
+                return <LandingPage onLoginClick={() => dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.LOGIN })} />;
+            case ViewState.LOGIN:
+                return <LoginPage onLogin={(user) => dispatch({ type: 'LOGIN', payload: user })} />;
+            case ViewState.SETUP:
+                return (
+                    <SetupScreen
+                        companyName={companyName} setCompanyName={setCompanyName}
+                        jobTitle={jobTitle} setJobTitle={setJobTitle}
+                        jobDescription={jobDescription} setJobDescription={setJobDescription}
+                        candidateEmail={candidateEmail} setCandidateEmail={setCandidateEmail}
+                        onStart={handleStartInterview}
+                        isLoading={isLoading}
+                        onFileChange={handleFileChange}
+                        resumeFileName={resumeFileName}
+                        onRemoveResume={() => { setResumeFileName(null); setResumeText(''); setExtractedSkills([]); }}
+                        interviewType={interviewType}
+                        setInterviewType={setInterviewType}
+                        templates={templates}
+                        onLoadTemplate={handleLoadTemplate}
+                        currentUser={currentUser}
+                        onLogout={handleLogout}
+                        isExtractingSkills={isExtractingSkills}
+                        extractedSkills={extractedSkills}
+                    />
+                );
+            case ViewState.INTERVIEW:
+                return (
+                    <InterviewScreen
+                        chatHistory={chatHistory}
+                        onSendMessage={handleSendMessage}
                         isAiResponding={isAiResponding}
                         questionCount={chatHistory.filter(m => m.role === 'ai' && !m.isGreeting && !m.isNudge).length}
                         onRestart={handleRestart}
@@ -627,66 +811,49 @@ const App: React.FC = () => {
                         onCandidateIdle={handleCandidateIdle}
                         isDeeplyIdle={isCandidateDeeplyIdle}
                         onContinueInterview={() => setIsCandidateDeeplyIdle(false)}
-                   />;
-            break;
-        case ViewState.RESULTS:
-            currentView = <ResultsScreen report={finalReport} onRestart={handleRestart} isLoading={!finalReport} />;
-            break;
-        case ViewState.HISTORY:
-            currentView = <HrDashboard 
-                            records={history} 
-                            templates={templates}
-                            onAddTemplate={handleAddTemplate}
-                            onUpdateTemplate={handleUpdateTemplate}
-                            onDeleteTemplate={handleDeleteTemplate}
-                            onLogout={handleLogout} 
-                            onUpdateRecord={handleUpdateRecord}
-                            currentUser={currentUser}
-                          />;
-            break;
-        case ViewState.LIVE:
-            currentView = <LiveInterviewScreen
+                    />
+                );
+            case ViewState.LIVE:
+                return (
+                    <LiveInterviewScreen 
                         mediaStreams={mediaStreams}
                         onEndInterview={handleEndLiveInterview}
-                        jobDescription={`Job Title: ${jobTitle}\n\n${jobDescription}`}
+                        jobDescription={jobDescription}
                         resumeText={resumeText}
                         onRestart={handleRestart}
                         currentUser={currentUser}
-                    />;
-            break;
-        case ViewState.SETUP:
-        default:
-            currentView = <SetupScreen 
-                        companyName={companyName}
-                        setCompanyName={setCompanyName}
-                        jobTitle={jobTitle}
-                        setJobTitle={setJobTitle}
-                        jobDescription={jobDescription}
-                        setJobDescription={setJobDescription}
-                        candidateEmail={candidateEmail}
-                        setCandidateEmail={setCandidateEmail}
-                        onStart={handleStartInterview}
-                        isLoading={isLoading}
-                        onFileChange={handleFileChange}
-                        resumeFileName={resumeFileName}
-                        onRemoveResume={() => { setResumeFileName(null); setResumeText(''); }}
-                        interviewType={interviewType}
-                        setInterviewType={setInterviewType}
+                    />
+                );
+            case ViewState.RESULTS:
+                return <ResultsScreen report={finalReport} onRestart={handleRestart} isLoading={isLoading} />;
+            case ViewState.HISTORY:
+                return (
+                    <HrDashboard
+                        records={history}
                         templates={templates}
-                        onLoadTemplate={handleLoadTemplate}
-                        currentUser={currentUser}
+                        onAddTemplate={(t) => setTemplates(prev => [...prev, {...t, id: `user-${Date.now()}`}])}
+                        onUpdateTemplate={(t) => setTemplates(prev => prev.map(pt => pt.id === t.id ? t : pt))}
+                        onDeleteTemplate={(id) => setTemplates(prev => prev.filter(t => t.id !== id))}
                         onLogout={handleLogout}
-                   />;
-            break;
-    }
+                        onUpdateRecord={handleUpdateRecord}
+                        currentUser={currentUser}
+                    />
+                );
+            default:
+                return <div>Invalid state</div>;
+        }
+    };
 
     return (
         <>
-            <DarkVeilBackground colorScheme="#2563eb" intensity={8.0} speed={1.0} />
-            {error && <ErrorDisplay message={error} onDismiss={() => setError(null)} />}
-            {currentView}
+            <DarkVeilBackground />
+            <div className="font-sans">
+                {error && <ErrorDisplay message={error} onDismiss={() => setError(null)} />}
+                {renderContent()}
+            </div>
         </>
     );
 };
 
+// FIX: Added a default export for the App component.
 export default App;

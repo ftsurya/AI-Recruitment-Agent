@@ -3,7 +3,8 @@ import { ChatMessage, FinalReport, NextStep } from '../types';
 import { 
     GREETING_PROMPT, NEXT_STEP_PROMPT, FINAL_REPORT_PROMPT, nextStepSchema, finalReportSchema, 
     ANALYZE_RESPONSE_PROMPT, textProctoringSchema,
-    COMMUNICATION_EMAIL_PROMPT, communicationEmailSchema
+    COMMUNICATION_EMAIL_PROMPT, communicationEmailSchema,
+    EXTRACT_SKILLS_PROMPT, extractSkillsSchema
 } from '../constants';
 
 const API_KEY = process.env.API_KEY;
@@ -115,7 +116,7 @@ const generateFirstQuestion = async (jobDescription: string, resumeText: string)
     };
 };
 
-const getNextStep = async (chatHistory: ChatMessage[], jobDescription: string, resumeText: string): Promise<NextStep> => {
+const getNextStep = async (chatHistory: ChatMessage[], jobDescription: string, resumeText: string, skills: string[]): Promise<NextStep> => {
     const recentHistory = chatHistory.slice(-10); // Keep context manageable
     const historyString = recentHistory.map(m => `${m.role}: ${m.content}`).join('\n');
     
@@ -128,6 +129,9 @@ const getNextStep = async (chatHistory: ChatMessage[], jobDescription: string, r
     --- RESUME ---
     ${resumeText}
 
+    --- EXTRACTED SKILLS FROM RESUME ---
+    ${skills.join(', ')}
+
     --- RECENT CHAT HISTORY ---
     ${historyString}
     `;
@@ -135,7 +139,7 @@ const getNextStep = async (chatHistory: ChatMessage[], jobDescription: string, r
     return generateContentWithSchema<NextStep>(prompt, nextStepSchema);
 };
 
-const generateFinalReport = async (chatHistory: ChatMessage[], jobDescription: string, resumeText: string, codeSubmission?: string): Promise<FinalReport> => {
+const generateFinalReport = async (chatHistory: ChatMessage[], jobDescription: string, resumeText: string, codeSubmission?: string, skills?: string[]): Promise<FinalReport> => {
     const historyString = chatHistory.map(m => `${m.role}: ${m.content}`).join('\n');
     
     const prompt = `
@@ -146,6 +150,8 @@ const generateFinalReport = async (chatHistory: ChatMessage[], jobDescription: s
 
     --- RESUME ---
     ${resumeText}
+
+    ${skills && skills.length > 0 ? `--- EXTRACTED SKILLS FROM RESUME ---\n${skills.join(', ')}` : ''}
 
     --- FULL CHAT HISTORY ---
     ${historyString}
@@ -272,6 +278,16 @@ const generateCommunicationEmail = async (report: FinalReport, candidateName: st
     return generateContentWithSchema<GeneratedEmail>(prompt, communicationEmailSchema);
 };
 
+const extractSkillsFromResume = async (resumeText: string): Promise<string[]> => {
+    const prompt = `
+        ${EXTRACT_SKILLS_PROMPT}
+
+        --- RESUME TEXT ---
+        ${resumeText}
+    `;
+    return generateContentWithSchema<string[]>(prompt, extractSkillsSchema);
+};
+
 
 export const aiRecruiterService = {
   generateFirstQuestion,
@@ -280,4 +296,5 @@ export const aiRecruiterService = {
   analyzeFrame,
   analyzeTextResponse,
   generateCommunicationEmail,
+  extractSkillsFromResume,
 };

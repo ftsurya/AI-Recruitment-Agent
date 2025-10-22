@@ -323,22 +323,30 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
                                 setAiStatus("Thinking");
                             }, 1500);
 
-                            const text = message.serverContent.inputTranscription.text;
-                            setTranscript(prev => {
-                                const last = prev[prev.length - 1];
-                                if (last?.speaker === 'user') return [...prev.slice(0, -1), { ...last, text: last.text + text }];
-                                return [...prev, { speaker: 'user', text, timestamp: videoRef.current?.currentTime }];
-                            });
+                            let text = message.serverContent.inputTranscription.text;
+                            text = text.replace(/<[^>]*>/g, '').replace(/[^\u0020-\u007E]/g, '');
+
+                            if (text.trim()) {
+                                setTranscript(prev => {
+                                    const last = prev[prev.length - 1];
+                                    if (last?.speaker === 'user') return [...prev.slice(0, -1), { ...last, text: last.text + text }];
+                                    return [...prev, { speaker: 'user', text, timestamp: videoRef.current?.currentTime }];
+                                });
+                            }
                         }
                         if (message.serverContent?.outputTranscription) {
                              if (speechDetectionTimeoutRef.current) clearTimeout(speechDetectionTimeoutRef.current);
                             setAiStatus("Speaking");
-                            const text = message.serverContent.outputTranscription.text;
-                             setTranscript(prev => {
-                                const last = prev[prev.length - 1];
-                                if (last?.speaker === 'ai') return [...prev.slice(0, -1), { ...last, text: last.text + text }];
-                                return [...prev, { speaker: 'ai', text, timestamp: videoRef.current?.currentTime }];
-                            });
+                            let text = message.serverContent.outputTranscription.text;
+                            text = text.replace(/<[^>]*>/g, '').replace(/[^\u0020-\u007E]/g, '');
+                            
+                            if (text.trim()) {
+                                setTranscript(prev => {
+                                    const last = prev[prev.length - 1];
+                                    if (last?.speaker === 'ai') return [...prev.slice(0, -1), { ...last, text: last.text + text }];
+                                    return [...prev, { speaker: 'ai', text, timestamp: videoRef.current?.currentTime }];
+                                });
+                            }
                         }
                         if (message.serverContent?.turnComplete) {
                             setAiStatus("Idle");

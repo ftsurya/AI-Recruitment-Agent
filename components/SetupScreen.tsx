@@ -19,12 +19,12 @@ interface SetupScreenProps {
   onRemoveResume: () => void;
   interviewType: InterviewType;
   setInterviewType: (type: InterviewType) => void;
-  // Template props
   templates: InterviewTemplate[];
   onLoadTemplate: (template: InterviewTemplate) => void;
-  // User props
   currentUser: User | null;
   onLogout: () => void;
+  isExtractingSkills: boolean;
+  extractedSkills: string[];
 }
 
 const InterviewTypeButton: React.FC<{
@@ -66,9 +66,11 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
   templates,
   onLoadTemplate,
   currentUser,
-  onLogout
+  onLogout,
+  isExtractingSkills,
+  extractedSkills
 }) => {
-  const isStartDisabled = !companyName.trim() || !jobTitle.trim() || !candidateEmail.trim() || !jobDescription.trim() || !resumeFileName || isLoading;
+  const isStartDisabled = !companyName.trim() || !jobTitle.trim() || !candidateEmail.trim() || !jobDescription.trim() || !resumeFileName || isLoading || isExtractingSkills;
 
   const handleTemplateSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const templateId = e.target.value;
@@ -137,20 +139,38 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
             {/* Resume Upload */}
             <div className="mb-6">
                  <h2 className="text-lg font-semibold text-slate-200 mb-3">Candidate Resume (PDF, TXT, DOCX)</h2>
-                 <div className="h-64">
+                 <div className="min-h-[16rem]">
                  {resumeFileName ? (
+                    isExtractingSkills ? (
+                        <div className="bg-slate-800/50 backdrop-blur-md border border-slate-600 rounded-lg h-full min-h-[16rem] flex flex-col items-center justify-center text-center p-4">
+                            <Spinner />
+                            <p className="mt-4 font-semibold text-slate-300">Analyzing Resume...</p>
+                            <p className="text-xs text-slate-400 mt-1">Extracting key skills and technologies.</p>
+                        </div>
+                    ) : (
                     <div className="bg-green-500/10 backdrop-blur-md border border-green-500/50 rounded-lg h-full flex flex-col items-center justify-center text-center p-4">
                         <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                         </div>
                         <p className="font-semibold text-green-300">{resumeFileName}</p>
                         <p className="text-xs text-slate-400 mt-1">File successfully loaded.</p>
+                        {extractedSkills.length > 0 && (
+                            <div className="mt-4 w-full text-left max-w-md">
+                                <p className="text-sm font-semibold text-slate-300 mb-2 text-center">Extracted Skills:</p>
+                                <div className="flex flex-wrap gap-2 justify-center">
+                                    {extractedSkills.map((skill, i) => (
+                                        <span key={i} className="bg-blue-500/20 text-blue-300 px-2 py-1 text-xs rounded-md">{skill}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         <button onClick={onRemoveResume} disabled={isLoading} className="mt-4 px-4 py-2 bg-red-600/80 text-white text-xs font-bold rounded-md hover:bg-red-600 transition-colors">
                             Remove File
                         </button>
                     </div>
+                    )
                 ) : (
-                    <label className="relative border-2 border-dashed border-slate-600 rounded-lg h-full flex flex-col items-center justify-center text-center hover:border-blue-500 transition-colors bg-black/20 backdrop-blur-sm cursor-pointer">
+                    <label className="relative border-2 border-dashed border-slate-600 rounded-lg h-full min-h-[16rem] flex flex-col items-center justify-center text-center hover:border-blue-500 transition-colors bg-black/20 backdrop-blur-sm cursor-pointer">
                         <input
                             type="file"
                             onChange={onFileChange}
