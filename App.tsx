@@ -1,3 +1,5 @@
+
+
 import React, { useState, useCallback, useRef, useReducer, useEffect } from 'react';
 import { ViewState, InterviewType, ChatMessage, FinalReport, HistoricalInterviewRecord, CandidateStatus, TranscriptEntry, InterviewTemplate, User, MagicToken } from './types';
 import { aiRecruiterService } from './services/geminiService';
@@ -9,7 +11,7 @@ import ResultsScreen from './components/ResultsScreen';
 import { HrDashboard } from './components/HrDashboard';
 import useLocalStorage from './hooks/useLocalStorage';
 import ErrorDisplay from './components/ErrorDisplay';
-import { DocumentTextIcon, ChatBubbleLeftRightIcon, ShieldCheckIcon, CodeBracketIcon, GaugeIcon, ComputerDesktopIcon, BeakerIcon, RobotIcon, UserCircleIcon, BuildingOfficeIcon, EnvelopeIcon, CheckCircleIcon, SendIcon } from './components/icons';
+import { AgentLogoIcon, ChartBarIcon, DocumentTextIcon, ChatBubbleLeftRightIcon, ShieldCheckIcon, CodeBracketIcon, GaugeIcon, ComputerDesktopIcon, BeakerIcon, RobotIcon, UserCircleIcon, BuildingOfficeIcon, EnvelopeIcon, CheckCircleIcon, SendIcon } from './components/icons';
 import DarkVeilBackground from './components/DarkVeilBackground';
 import ScrollFloatText from './components/ScrollFloatText';
 import Spinner from './components/Spinner';
@@ -22,24 +24,12 @@ interface MediaStreams {
 
 
 // --- Landing Page Component ---
-const LandingMicrophoneIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m12 0v-1.5a6 6 0 00-12 0v1.5m6 7.5v3.75m-3.75 0h7.5" />
-    </svg>
-);
-
-const ChartBarIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-    </svg>
-);
-
-
 interface LandingPageProps {
-  onLoginClick: () => void;
+  onInitiateLogin: (role: User['role']) => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onInitiateLogin }) => {
+
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
     e.preventDefault();
     const element = document.getElementById(targetId);
@@ -47,813 +37,723 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
       element.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  const howItWorksSteps = [
+      {
+        icon: <ComputerDesktopIcon className="w-8 h-8 text-blue-400"/>,
+        title: "Setup",
+        description: "Enter job details, or load a template. Upload the candidate's resume and select interview type (Chat/Live).",
+        align: 'right'
+      },
+      {
+        icon: <RobotIcon className="w-8 h-8 text-blue-400"/>,
+        title: "Interview",
+        description: "The AI conducts a structured interview, including a coding challenge, while proctoring ensures integrity.",
+        align: 'left'
+      },
+      {
+        icon: <DocumentTextIcon className="w-8 h-8 text-blue-400"/>,
+        title: "Review",
+        description: "A detailed report is generated instantly, covering skills, behavior, and salary recommendations.",
+        align: 'right'
+      },
+      {
+        icon: <ChartBarIcon className="w-8 h-8 text-blue-400"/>,
+        title: "Manage",
+        description: "Use the HR Dashboard to compare candidates, track progress, and communicate next steps.",
+        align: 'left'
+      }
+  ];
   
   return (
     <div className="w-full bg-transparent text-white">
-      <header className="sticky top-0 bg-slate-900/50 backdrop-blur-xl border-b border-white/10 p-6 z-10">
+      <header className="sticky top-0 bg-slate-900/50 backdrop-blur-xl border-b border-white/10 p-4 z-10">
         <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <LandingMicrophoneIcon className="w-8 h-8 text-blue-400" />
+          <div className="flex items-center gap-3">
+            <AgentLogoIcon className="w-8 h-8 text-blue-400" />
             <span className="text-2xl font-bold">AI Recruitment Agent</span>
           </div>
-          <nav className="hidden md:flex items-center gap-8">
-            <a href="#features" onClick={(e) => handleNavClick(e, 'features')} className="text-slate-300 hover:text-white transition-colors">Features</a>
-            <a href="#how-it-works" onClick={(e) => handleNavClick(e, 'how-it-works')} className="text-slate-300 hover:text-white transition-colors">How It Works</a>
-            <a href="#prepare" onClick={(e) => handleNavClick(e, 'prepare')} className="text-slate-300 hover:text-white transition-colors">Prepare</a>
-          </nav>
-          <button
-            onClick={onLoginClick}
-            className="bg-blue-600/30 backdrop-blur-md border border-blue-400/50 hover:bg-blue-600/50 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
-          >
-            Login
-          </button>
+          <div className='flex items-center gap-6'>
+            <nav className="hidden md:flex items-center gap-6">
+              <a href="#features" onClick={(e) => handleNavClick(e, 'features')} className="text-slate-300 hover:text-white transition-colors">Features</a>
+              <a href="#how-it-works" onClick={(e) => handleNavClick(e, 'how-it-works')} className="text-slate-300 hover:text-white transition-colors">How It Works</a>
+              <a href="#prepare" onClick={(e) => handleNavClick(e, 'prepare')} className="text-slate-300 hover:text-white transition-colors">Prepare</a>
+            </nav>
+            <button 
+              onClick={() => onInitiateLogin('HR')}
+              className="px-5 py-2 text-sm font-semibold text-white bg-blue-600/50 border border-blue-500 rounded-lg hover:bg-blue-600/70 transition-colors"
+            >
+              Login
+            </button>
+          </div>
         </div>
       </header>
       <main>
         {/* Hero Section */}
-        <section className="min-h-[calc(100vh-104px)] flex items-center justify-center relative">
-            <div className="container mx-auto text-center px-4 animate-fade-in">
-              <h1 className="text-4xl md:text-6xl font-extrabold mb-4">
-                The Future of Hiring is Here.
-                <br />
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-blue-500">Smarter, Faster AI-Powered Interviews.</span>
-              </h1>
+        <section className="min-h-[calc(100vh-80px)] flex items-center justify-center text-center relative px-4">
+            <div className="max-w-4xl animate-slide-in-up">
+                <h1 className="text-5xl md:text-7xl font-extrabold text-slate-100 leading-tight">
+                    The Future of Hiring is Here.
+                </h1>
+                <h2 className="mt-4 text-5xl md:text-7xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
+                    Smarter, Faster AI-Powered Interviews.
+                </h2>
             </div>
-            <ScrollFloatText />
+            <ScrollFloatText textContent="SCROLL DOWN" />
         </section>
 
         {/* Features Section */}
-        <section id="features" className="py-20 bg-transparent">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Powerful Features for Smarter Hiring</h2>
-            <p className="text-slate-400 mb-12 max-w-2xl mx-auto">Everything you need to automate and enhance your recruitment process, from start to finish.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up">
-                <div className="bg-blue-500/20 p-4 rounded-full mb-6"><ChatBubbleLeftRightIcon className="w-10 h-10 text-blue-300"/></div>
-                <h3 className="text-xl font-semibold mb-2">AI-Powered Interviews</h3>
-                <p className="text-slate-400 text-center">Conducts both dynamic text-based chats and realistic live voice interviews to engage candidates effectively.</p>
-              </div>
-              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.1s' }}>
-                <div className="bg-blue-500/20 p-4 rounded-full mb-6"><DocumentTextIcon className="w-10 h-10 text-blue-300"/></div>
-                <h3 className="text-xl font-semibold mb-2">Adaptive Questioning</h3>
-                <p className="text-slate-400 text-center">Intelligently generates questions based on the job description and candidate's resume for a tailored assessment.</p>
-              </div>
-              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.2s' }}>
-                <div className="bg-blue-500/20 p-4 rounded-full mb-6"><GaugeIcon className="w-10 h-10 text-blue-300"/></div>
-                <h3 className="text-xl font-semibold mb-2">Real-time Evaluation</h3>
-                <p className="text-slate-400 text-center">Analyzes candidate responses in real-time, providing instant scoring and constructive feedback.</p>
-              </div>
-              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.3s' }}>
-                <div className="bg-blue-500/20 p-4 rounded-full mb-6"><ChartBarIcon className="w-10 h-10 text-blue-300"/></div>
-                <h3 className="text-xl font-semibold mb-2">In-depth Reporting</h3>
-                <p className="text-slate-400 text-center">Generates comprehensive reports with overall scores, strength/weakness analysis, and salary suggestions.</p>
-              </div>
-              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.4s' }}>
-                <div className="bg-blue-500/20 p-4 rounded-full mb-6"><ShieldCheckIcon className="w-10 h-10 text-blue-300"/></div>
-                <h3 className="text-xl font-semibold mb-2">Interview Integrity</h3>
-                <p className="text-slate-400 text-center">Employs advanced AI proctoring to monitor for cheating, ensuring a fair and authentic evaluation process.</p>
-              </div>
-              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.5s' }}>
-                <div className="bg-blue-500/20 p-4 rounded-full mb-6"><CodeBracketIcon className="w-10 h-10 text-blue-300"/></div>
-                <h3 className="text-xl font-semibold mb-2">Interactive Coding Challenges</h3>
-                <p className="text-slate-400 text-center">Includes a fully-functional Python IDE for assessing technical skills with hands-on coding exercises.</p>
-              </div>
+        <section id="features" className="py-20 bg-black/20 backdrop-blur-2xl">
+            <div className="container mx-auto px-4 text-center">
+                <h2 className="text-4xl font-bold mb-2">Revolutionize Your Hiring</h2>
+                <p className="text-slate-400 mb-12 max-w-2xl mx-auto">Our AI-powered platform provides a comprehensive suite of tools to streamline your recruitment process from start to finish.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
+                    {[
+                        { icon: <ChatBubbleLeftRightIcon className="w-8 h-8 text-blue-400"/>, title: "Interactive Interviews", desc: "Engage candidates with dynamic chat or live voice interviews that adapt in real-time." },
+                        { icon: <DocumentTextIcon className="w-8 h-8 text-blue-400"/>, title: "Intelligent Analysis", desc: "Go beyond keywords with AI that analyzes resumes and job descriptions for true skill alignment." },
+                        { icon: <ShieldCheckIcon className="w-8 h-8 text-blue-400"/>, title: "Advanced Proctoring", desc: "Ensure interview integrity with automated monitoring for chat plagiarism and webcam policy violations." },
+                        { icon: <CodeBracketIcon className="w-8 h-8 text-blue-400"/>, title: "Live Coding Challenges", desc: "Assess practical skills with an integrated IDE and AI-assisted evaluation for Python tasks." },
+                        { icon: <GaugeIcon className="w-8 h-8 text-blue-400"/>, title: "In-Depth Reporting", desc: "Receive comprehensive reports with scoring, behavioral analysis, and salary suggestions." },
+                        { icon: <ChartBarIcon className="w-8 h-8 text-blue-400"/>, title: "HR Dashboard & Analytics", desc: "Manage candidates, compare profiles, and gain insights into your hiring pipeline." },
+                    ].map(f => (
+                        <div key={f.title} className="bg-white/5 backdrop-blur-lg border border-white/10 p-6 rounded-xl">
+                            <div className="mb-4">{f.icon}</div>
+                            <h3 className="font-semibold text-lg mb-2">{f.title}</h3>
+                            <p className="text-slate-400 text-sm">{f.desc}</p>
+                        </div>
+                    ))}
+                </div>
             </div>
-          </div>
         </section>
 
         {/* How It Works Section */}
-        <section id="how-it-works" className="py-20 bg-slate-900/30">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
-            <p className="text-slate-400 mb-12 max-w-2xl mx-auto">A simple four-step process to streamline your recruitment.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {/* Step 1 */}
-              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.1s' }}>
-                <div className="bg-blue-500/20 p-4 rounded-full mb-6"><DocumentTextIcon className="w-10 h-10 text-blue-300"/></div>
-                <h3 className="text-xl font-semibold mb-2">1. Provide Details</h3>
-                <p className="text-slate-400 text-center">Upload the job description and candidate's resume to provide context for the AI.</p>
-              </div>
-              {/* Step 2 */}
-              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.2s' }}>
-                <div className="bg-blue-500/20 p-4 rounded-full mb-6"><ChatBubbleLeftRightIcon className="w-10 h-10 text-blue-300"/></div>
-                <h3 className="text-xl font-semibold mb-2">2. AI Conducts Interview</h3>
-                <p className="text-slate-400 text-center">Our AI engages the candidate in a comprehensive text or voice-based interview.</p>
-              </div>
-              {/* Step 3 */}
-              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.3s' }}>
-                <div className="bg-blue-500/20 p-4 rounded-full mb-6"><ChartBarIcon className="w-10 h-10 text-blue-300"/></div>
-                <h3 className="text-xl font-semibold mb-2">3. Get Instant Report</h3>
-                <p className="text-slate-400 text-center">Receive a detailed analysis of skills, performance, and salary recommendations.</p>
-              </div>
-               {/* Step 4 */}
-              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center animate-slide-in-up" style={{ animationDelay: '0.4s' }}>
-                <div className="bg-blue-500/20 p-4 rounded-full mb-6"><ShieldCheckIcon className="w-10 h-10 text-blue-300"/></div>
-                <h3 className="text-xl font-semibold mb-2">4. Ensure Integrity</h3>
-                <p className="text-slate-400 text-center">Built-in proctoring ensures response authenticity and fair evaluation for all candidates.</p>
-              </div>
+        <section id="how-it-works" className="py-20">
+            <div className="container mx-auto px-4">
+                <div className="text-center">
+                    <h2 className="text-4xl font-bold mb-12">Simple Steps to a Smarter Hire</h2>
+                </div>
+                <div className="relative max-w-3xl mx-auto">
+                    <div className="border-l-2 border-slate-700/50 absolute h-full top-0 left-1/2 -translate-x-1/2"></div>
+                    <div className="space-y-16">
+                        {howItWorksSteps.map((step, index) => (
+                            <div key={index} className="flex justify-between items-center w-full">
+                                {step.align === 'left' && (
+                                    <>
+                                        <div className="w-1/2 pr-8 text-right">
+                                            <div className="bg-white/5 backdrop-blur-lg border border-white/10 p-6 rounded-xl">
+                                                <h3 className="font-bold text-2xl text-slate-100 mb-2">{step.title}</h3>
+                                                <p className="text-slate-400">{step.description}</p>
+                                            </div>
+                                        </div>
+                                        <div className="z-10 bg-slate-800 p-4 rounded-full border-2 border-slate-600 bg-slate-900">{step.icon}</div>
+                                        <div className="w-1/2"></div>
+                                    </>
+                                )}
+                                {step.align === 'right' && (
+                                    <>
+                                        <div className="w-1/2"></div>
+                                        <div className="z-10 bg-slate-800 p-4 rounded-full border-2 border-slate-600 bg-slate-900">{step.icon}</div>
+                                        <div className="w-1/2 pl-8 text-left">
+                                            <div className="bg-white/5 backdrop-blur-lg border border-white/10 p-6 rounded-xl">
+                                                <h3 className="font-bold text-2xl text-slate-100 mb-2">{step.title}</h3>
+                                                <p className="text-slate-400">{step.description}</p>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
-          </div>
         </section>
-        
-        {/* Preparation Guide Section */}
-        <section id="prepare" className="py-20 bg-transparent">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Preparing for Your Interview</h2>
-            <p className="text-slate-400 mb-12 max-w-2xl mx-auto">Follow these guidelines to ensure a smooth and successful AI-powered interview experience.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
-              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col animate-slide-in-up" style={{ animationDelay: '0.1s' }}>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="bg-blue-500/20 p-3 rounded-full"><ComputerDesktopIcon className="w-8 h-8 text-blue-300"/></div>
-                  <h3 className="text-xl font-semibold">Your Environment</h3>
+
+
+        {/* Candidate Prep Section */}
+        <section id="prepare" className="py-20 bg-black/20 backdrop-blur-2xl">
+            <div className="container mx-auto px-4 text-center">
+                <h2 className="text-4xl font-bold mb-2">Preparing for Your AI Interview?</h2>
+                <p className="text-slate-400 mb-12 max-w-2xl mx-auto">As a candidate, here are some tips to ensure a smooth and successful interview experience.</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+                    <div className="bg-white/5 backdrop-blur-lg border border-white/10 p-6 rounded-xl">
+                        <h3 className="font-semibold text-lg mb-2">Find a Quiet Space</h3>
+                        <p className="text-slate-400 text-sm">Minimize background noise and distractions. For live interviews, ensure you are in a well-lit room.</p>
+                    </div>
+                    <div className="bg-white/5 backdrop-blur-lg border border-white/10 p-6 rounded-xl">
+                        <h3 className="font-semibold text-lg mb-2">Be Authentic</h3>
+                        <p className="text-slate-400 text-sm">The AI is designed to assess your genuine skills and experience. Answer naturally and honestly. Our proctoring systems will flag non-genuine responses.</p>
+                    </div>
+                     <div className="bg-white/5 backdrop-blur-lg border border-white/10 p-6 rounded-xl">
+                        <h3 className="font-semibold text-lg mb-2">Think Aloud</h3>
+                        <p className="text-slate-400 text-sm">During coding challenges, explain your thought process. The AI evaluates your problem-solving approach, not just the final code.</p>
+                    </div>
                 </div>
-                <ul className="list-disc list-inside text-slate-400 space-y-2">
-                  <li>Find a quiet, well-lit space where you won't be disturbed.</li>
-                  <li>Ensure a stable and fast internet connection.</li>
-                  <li>For live interviews, confirm your camera and microphone are working correctly.</li>
-                  <li>Close all unnecessary applications and browser tabs.</li>
-                </ul>
-              </div>
-              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col animate-slide-in-up" style={{ animationDelay: '0.2s' }}>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="bg-blue-500/20 p-3 rounded-full"><BeakerIcon className="w-8 h-8 text-blue-300"/></div>
-                  <h3 className="text-xl font-semibold">Your Approach</h3>
-                </div>
-                <ul className="list-disc list-inside text-slate-400 space-y-2">
-                  <li>Treat this as a professional interview with a human recruiter.</li>
-                  <li>Be ready to discuss your skills and experience as listed on your resume.</li>
-                  <li>For coding challenges, articulate your thought process clearly.</li>
-                  <li>Listen carefully to the AI's questions and answer thoughtfully.</li>
-                </ul>
-              </div>
-              <div className="p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col animate-slide-in-up" style={{ animationDelay: '0.3s' }}>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="bg-blue-500/20 p-3 rounded-full"><ShieldCheckIcon className="w-8 h-8 text-blue-300"/></div>
-                  <h3 className="text-xl font-semibold">Interview Integrity</h3>
-                </div>
-                <ul className="list-disc list-inside text-slate-400 space-y-2">
-                  <li>Do not use your phone, search the web, or use AI assistance.</li>
-                  <li>Our system actively monitors for cheating to ensure a fair process.</li>
-                  <li>All responses, whether text or voice, must be in English.</li>
-                  <li>Authenticity is key. Your own knowledge is all you need.</li>
-                </ul>
-              </div>
             </div>
-          </div>
         </section>
       </main>
-      <footer className="p-6 text-center text-slate-500 bg-transparent">
+      <footer className="py-8 border-t border-white/10 text-center text-slate-500">
         <p>&copy; {new Date().getFullYear()} AI Recruitment Agent. All rights reserved.</p>
       </footer>
     </div>
   );
 };
 
-
-// --- Login Page Component ---
-type UserRole = 'Candidate' | 'HR';
-
-interface LoginPageProps {
-  onLogin: (user: User) => void;
+// --- Login Screen Component ---
+interface LoginScreenProps {
+  onLogin: (email: string, role: User['role']) => void;
+  onBack: () => void;
+  isLoading: boolean;
+  initialRole: User['role'];
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLinkSent, setIsLinkSent] = useState(false);
-  const [loginMessage, setLoginMessage] = useState('');
+const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onBack, isLoading, initialRole }) => {
+    const [email, setEmail] = useState('');
+    const [role, setRole] = useState<User['role']>(initialRole);
+    const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleRoleSelect = (role: UserRole) => {
-    setSelectedRole(role);
-    setEmail('');
-    setIsLinkSent(false);
-    setIsLoading(false);
-    setLoginMessage('');
-  };
-
-  const handleSendLink = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim() || !selectedRole) return;
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email.trim() || isLoading) return;
+        setShowSuccess(true);
+        onLogin(email, role);
+    };
     
-    setIsLoading(true);
-    setLoginMessage('');
+    const RoleButton: React.FC<{
+        selected: boolean;
+        onClick: () => void;
+        Icon: React.FC<{className?: string}>;
+        label: string;
+    }> = ({ selected, onClick, Icon, label }) => (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`w-full flex items-center justify-center gap-3 p-4 border rounded-lg transition-all duration-300
+                ${selected ? 'bg-blue-600/50 border-blue-500 ring-2 ring-blue-500/50' : 'bg-white/5 hover:bg-white/10 border-white/10'}
+            `}
+        >
+            <Icon className="w-6 h-6"/>
+            <span className="font-semibold">{label}</span>
+        </button>
+    )
 
-    // Simulate sending an email and generating a token
-    setTimeout(() => {
-        const token = crypto.randomUUID();
-        const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minute expiry
+    return (
+        <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 text-white animate-fade-in bg-transparent relative">
+            <div className="w-full max-w-md">
+                <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 shadow-2xl animate-slide-in-up">
+                    {showSuccess ? (
+                        <div className="text-center py-8">
+                            <CheckCircleIcon className="w-16 h-16 text-green-400 mx-auto mb-4"/>
+                            <h2 className="text-2xl font-bold text-slate-100">Magic Link Sent!</h2>
+                            <p className="text-slate-400 mt-2 mb-6">Please check your inbox for an email from us. You will be redirected shortly.</p>
+                            <Spinner />
+                        </div>
+                    ) : (
+                        <>
+                             <div className="text-center mb-8">
+                                <AgentLogoIcon className="w-16 h-16 text-blue-400 mx-auto mb-4"/>
+                                <h2 className="text-3xl font-bold text-slate-100">Welcome</h2>
+                                <p className="text-slate-400 mt-2">Enter your email to get a login link as a {role === 'HR' ? 'HR Professional' : 'Candidate'}.</p>
+                            </div>
 
-        const magicToken: MagicToken = {
-            token,
-            email,
-            role: selectedRole,
-            expiresAt
-        };
+                            <div className="flex gap-4 mb-6">
+                                <RoleButton selected={role === 'Candidate'} onClick={() => setRole('Candidate')} Icon={UserCircleIcon} label="I'm a Candidate" />
+                                <RoleButton selected={role === 'HR'} onClick={() => setRole('HR')} Icon={BuildingOfficeIcon} label="I'm an HR Professional" />
+                            </div>
 
-        // In a real app, an email would be sent. Here we use localStorage to simulate the backend.
-        localStorage.setItem('magic-token', JSON.stringify(magicToken));
-
-        setIsLoading(false);
-        setIsLinkSent(true);
-        setLoginMessage(`For this demo, a magic link has been generated for ${email}. Click below to log in.`);
-    }, 1500);
-  };
-  
-  const handleLoginWithToken = () => {
-    setIsLoading(true);
-    setLoginMessage('');
-
-    // Simulate delay for validating the token
-    setTimeout(() => {
-        const tokenData = localStorage.getItem('magic-token');
-        if (!tokenData) {
-            setLoginMessage('Login failed. No valid login link found. Please request a new one.');
-            setIsLoading(false);
-            setIsLinkSent(false);
-            return;
-        }
-
-        try {
-            const magicToken: MagicToken = JSON.parse(tokenData);
-            if (Date.now() > magicToken.expiresAt) {
-                setLoginMessage('Your login link has expired. Please request a new one.');
-                localStorage.removeItem('magic-token');
-                setIsLoading(false);
-                setIsLinkSent(false);
-                return;
-            }
-            
-            // Success
-            const name = magicToken.role === 'HR' ? 'HR Professional' : (magicToken.email.split('@')[0] || 'Candidate');
-            onLogin({ name, role: magicToken.role });
-            localStorage.removeItem('magic-token');
-
-        } catch (error) {
-            setLoginMessage('An error occurred during login. Please try again.');
-            localStorage.removeItem('magic-token');
-            setIsLoading(false);
-            setIsLinkSent(false);
-        }
-    }, 1000);
-  };
-
-  const handleBackToRoleSelection = () => {
-    setSelectedRole(null);
-    setEmail('');
-    setIsLinkSent(false);
-    setLoginMessage('');
-  };
-
-  const isFormVisible = selectedRole !== null;
-  const isSendButtonDisabled = !email.trim() || isLoading;
-
-  return (
-    <div className="min-h-screen w-full bg-transparent text-white flex flex-col items-center justify-center p-4 animate-fade-in">
-      <div className="text-center w-full max-w-lg mx-auto">
-        <div className="inline-block p-4 bg-blue-500/10 rounded-full mb-6 ring-1 ring-blue-500/20">
-          <RobotIcon className="w-12 h-12 text-blue-400" />
-        </div>
-
-        <h1 className="text-4xl md:text-5xl font-bold mb-3">Welcome</h1>
-        <p className="text-md text-slate-400 mb-8 h-5">
-          {loginMessage || (isFormVisible 
-            ? `Enter your email to get a login link as a ${selectedRole}.`
-            : 'Please select your role to continue.'
-          )}
-        </p>
-
-        {/* Role Selection */}
-        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-8 transition-opacity duration-500 ${isFormVisible ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-          <button
-            onClick={() => handleRoleSelect('Candidate')}
-            disabled={isFormVisible}
-            className={`group bg-white/5 backdrop-blur-lg hover:bg-white/10 border rounded-2xl p-6 text-left transition-all duration-300 flex items-center gap-4
-              ${selectedRole === 'Candidate' ? 'border-blue-400 ring-2 ring-blue-400/50' : 'border-white/10'}`}
-          >
-            <UserCircleIcon className="w-8 h-8 text-slate-400 group-hover:text-blue-400 transition-colors" />
-            <div><h2 className="text-lg font-semibold text-slate-100">I'm a Candidate</h2></div>
-          </button>
-          <button
-            onClick={() => handleRoleSelect('HR')}
-            disabled={isFormVisible}
-            className={`group bg-white/5 backdrop-blur-lg hover:bg-white/10 border rounded-2xl p-6 text-left transition-all duration-300 flex items-center gap-4
-              ${selectedRole === 'HR' ? 'border-blue-400 ring-2 ring-blue-400/50' : 'border-white/10'}`}
-          >
-            <BuildingOfficeIcon className="w-8 h-8 text-slate-400 group-hover:text-blue-400 transition-colors" />
-            <div><h2 className="text-lg font-semibold text-slate-100">I'm an HR Professional</h2></div>
-          </button>
-        </div>
-
-        {/* Login Form / Success Message */}
-        <div className="h-48 flex items-center justify-center">
-        {isFormVisible && (
-            isLinkSent ? (
-                <div className="text-center animate-fade-in w-full">
-                    <CheckCircleIcon className="w-16 h-16 text-green-400 mx-auto mb-4"/>
-                    <h2 className="text-2xl font-semibold text-slate-200 mb-6">Link Generated!</h2>
-                    <button
-                        onClick={handleLoginWithToken}
-                        disabled={isLoading}
-                        className={`w-full font-semibold py-3 rounded-lg transition-all duration-300 border flex items-center justify-center ${
-                           isLoading 
-                           ? 'bg-slate-700/50 border-slate-600 text-slate-500 cursor-not-allowed'
-                           : 'bg-green-600/40 backdrop-blur-md border-green-400/60 hover:bg-green-500/60 text-white shadow-lg shadow-green-500/30'
-                        }`}
-                    >
-                         {isLoading ? <Spinner size="sm" /> : 'Log In (from simulated email)'}
-                    </button>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div>
+                                    <div className="relative">
+                                        <input
+                                            id="email"
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            placeholder="Email Address"
+                                            required
+                                            className="w-full bg-slate-900/50 backdrop-blur-sm border border-slate-600 rounded-lg py-3 px-4 focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-200 placeholder-slate-500"
+                                        />
+                                    </div>
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={isLoading || !email.trim()}
+                                    className="w-full font-bold py-3 px-6 rounded-lg transition-all duration-300 flex items-center justify-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white shadow-lg disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed"
+                                >
+                                    {isLoading ? <Spinner size="sm" /> : <><span>Send Login Link &gt;&gt;</span></>}
+                                </button>
+                            </form>
+                            <button onClick={onBack} className="text-sm text-slate-400 hover:text-white mt-6 w-full text-center">
+                                &larr; Back to role selection
+                            </button>
+                        </>
+                    )}
                 </div>
-            ) : (
-                <form onSubmit={handleSendLink} className="w-full animate-slide-in-up">
-                    <div className="relative mb-6">
-                        <EnvelopeIcon className="w-5 h-5 text-slate-400 absolute top-1/2 left-4 -translate-y-1.2/2" />
-                        <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)}
-                            className="w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg py-3 pl-12 pr-4 focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-200 placeholder-slate-500" required />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={isSendButtonDisabled}
-                      className={`w-full font-semibold py-3 rounded-lg transition-all duration-300 border flex items-center justify-center gap-2 ${
-                        !isSendButtonDisabled
-                          ? 'bg-blue-600/40 backdrop-blur-md border-blue-400/60 hover:bg-blue-500/60 text-white shadow-lg shadow-blue-500/30'
-                          : 'bg-slate-700/50 border-slate-600 text-slate-500 cursor-not-allowed'
-                      }`}
-                    >
-                      {isLoading ? <Spinner size="sm" /> : <>Send Login Link <SendIcon className="w-4 h-4" /></>}
-                    </button>
-                </form>
-            )
-        )}
+            </div>
         </div>
-        
-        {isFormVisible && (
-             <button
-                onClick={handleBackToRoleSelection}
-                className="mt-4 text-sm text-slate-400 hover:text-white transition-colors"
-            >
-                &larr; Back to role selection
-            </button>
-        )}
-      </div>
-    </div>
-  );
+    );
 };
 
 
-// --- App State Management using useReducer ---
+// --- Main App State ---
 
-interface AppState {
-  viewState: ViewState;
-  currentUser: User | null;
-}
-
-type AppAction =
-  | { type: 'LOGIN'; payload: User }
-  | { type: 'LOGOUT' }
-  | { type: 'SET_VIEW_STATE'; payload: ViewState };
+type AppState = {
+  view: ViewState;
+  interviewType: InterviewType;
+  companyName: string;
+  jobTitle: string;
+  jobDescription: string;
+  candidateEmail: string;
+  resumeText: string;
+  resumeFileName: string | null;
+  extractedSkills: string[];
+  chatHistory: ChatMessage[];
+  finalReport: FinalReport | null;
+  questionCount: number;
+  warningCount: number;
+  isTerminated: boolean;
+  codeSubmission: string;
+  transcript: TranscriptEntry[];
+  videoRecordingUrl: string;
+  isDeeplyIdle: boolean;
+};
 
 const initialState: AppState = {
-  viewState: ViewState.LANDING,
-  currentUser: null,
+  view: ViewState.LANDING,
+  interviewType: InterviewType.CHAT,
+  companyName: '',
+  jobTitle: '',
+  jobDescription: '',
+  candidateEmail: '',
+  resumeText: '',
+  resumeFileName: null,
+  extractedSkills: [],
+  chatHistory: [],
+  finalReport: null,
+  questionCount: 0,
+  warningCount: 0,
+  isTerminated: false,
+  codeSubmission: '',
+  transcript: [],
+  videoRecordingUrl: '',
+  isDeeplyIdle: false,
 };
 
-function appReducer(state: AppState, action: AppAction): AppState {
+type Action =
+  | { type: 'SET_VIEW'; payload: ViewState }
+  | { type: 'SET_INTERVIEW_TYPE'; payload: InterviewType }
+  | { type: 'SETUP_INTERVIEW'; payload: Partial<AppState> }
+  | { type: 'START_INTERVIEW'; payload: ChatMessage }
+  | { type: 'SEND_MESSAGE'; payload: ChatMessage }
+  | { type: 'RECEIVE_AI_RESPONSE'; payload: { message: ChatMessage; nextQuestion?: any; isGameOver?: boolean } }
+  | { type: 'SET_FINAL_REPORT'; payload: FinalReport }
+  | { type: 'RESET'; payload?: { view: ViewState } }
+  | { type: 'FLAG_MESSAGE'; payload: { index: number, reason: string } }
+  | { type: 'INCREMENT_WARNING' }
+  | { type: 'TERMINATE_INTERVIEW' }
+  | { type: 'SET_CODE'; payload: string }
+  | { type: 'END_LIVE_INTERVIEW'; payload: { transcript: TranscriptEntry[], code: string, videoUrl: string } }
+  | { type: 'SET_IDLE_STATE'; payload: boolean };
+
+
+const appReducer = (state: AppState, action: Action): AppState => {
   switch (action.type) {
-    case 'LOGIN':
-      return {
-        ...state,
-        currentUser: action.payload,
-        viewState: action.payload.role === 'HR' ? ViewState.HISTORY : ViewState.SETUP,
-      };
-    case 'LOGOUT':
-      return {
-        ...state,
-        currentUser: null,
-        viewState: ViewState.LANDING,
-      };
-    case 'SET_VIEW_STATE':
-      return {
-        ...state,
-        viewState: action.payload,
-      };
+    case 'SET_VIEW':
+      return { ...state, view: action.payload };
+    case 'SET_INTERVIEW_TYPE':
+        return { ...state, interviewType: action.payload };
+    case 'SETUP_INTERVIEW':
+      return { ...state, ...action.payload };
+    case 'START_INTERVIEW':
+        return { ...state, chatHistory: [action.payload], view: ViewState.INTERVIEW };
+    case 'SEND_MESSAGE':
+        return { ...state, chatHistory: [...state.chatHistory, action.payload] };
+    case 'RECEIVE_AI_RESPONSE':
+        const newState = { ...state, chatHistory: [...state.chatHistory, action.payload.message] };
+        if (action.payload.nextQuestion) {
+            newState.questionCount += 1;
+        }
+        if (action.payload.isGameOver) {
+            newState.view = ViewState.RESULTS;
+        }
+        return newState;
+    case 'SET_FINAL_REPORT':
+        return { ...state, finalReport: action.payload, view: ViewState.RESULTS };
+    case 'RESET':
+        return { 
+            ...initialState, 
+            view: action.payload?.view || ViewState.SETUP
+        };
+    case 'FLAG_MESSAGE': {
+        const newHistory = [...state.chatHistory];
+        if(newHistory[action.payload.index]){
+             newHistory[action.payload.index].proctoringResult = { flagged: true, reason: action.payload.reason };
+        }
+        return { ...state, chatHistory: newHistory };
+    }
+    case 'INCREMENT_WARNING':
+        return { ...state, warningCount: state.warningCount + 1 };
+    case 'TERMINATE_INTERVIEW':
+        return { ...state, isTerminated: true };
+    case 'SET_CODE':
+        return { ...state, codeSubmission: action.payload };
+    case 'END_LIVE_INTERVIEW':
+        return { ...state, ...action.payload, view: ViewState.RESULTS };
+    case 'SET_IDLE_STATE':
+        return { ...state, isDeeplyIdle: action.payload };
     default:
       return state;
   }
-}
+};
 
-
-// --- Main App Component ---
 const App: React.FC = () => {
-    const [appState, dispatch] = useReducer(appReducer, initialState);
-    const { viewState, currentUser } = appState;
-
-    const [companyName, setCompanyName] = useState<string>('');
-    const [jobTitle, setJobTitle] = useState<string>('');
-    const [jobDescription, setJobDescription] = useState<string>('');
-    const [candidateEmail, setCandidateEmail] = useState<string>('');
-    const [resumeText, setResumeText] = useState<string>('');
-    const [resumeFileName, setResumeFileName] = useState<string | null>(null);
-    const [interviewType, setInterviewType] = useState<InterviewType>(InterviewType.CHAT);
-    const [extractedSkills, setExtractedSkills] = useState<string[]>([]);
-    
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [isExtractingSkills, setIsExtractingSkills] = useState<boolean>(false);
+    const [state, dispatch] = useReducer(appReducer, initialState);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isExtractingSkills, setIsExtractingSkills] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-    const [finalReport, setFinalReport] = useState<FinalReport | null>(null);
-    const [isAiResponding, setIsAiResponding] = useState<boolean>(false);
-
-    const [chatWarningCount, setChatWarningCount] = useState(0);
-    const [isChatTerminated, setIsChatTerminated] = useState(false);
-    const [isCandidateDeeplyIdle, setIsCandidateDeeplyIdle] = useState(false);
-
     const [mediaStreams, setMediaStreams] = useState<MediaStreams | null>(null);
-    const mediaStreamsRef = useRef<MediaStreams | null>(null);
+    const [loginRole, setLoginRole] = useState<User['role']>('Candidate');
 
-    const [history, setHistory] = useLocalStorage<HistoricalInterviewRecord[]>('interviewHistory', []);
-    const [templates, setTemplates] = useLocalStorage<InterviewTemplate[]>('interviewTemplates', []);
-    const [templatesInitialized, setTemplatesInitialized] = useLocalStorage('templatesInitialized', false);
+    const [currentUser, setCurrentUser] = useLocalStorage<User | null>('currentUser', null);
+    const [magicToken, setMagicToken] = useLocalStorage<MagicToken | null>('magicToken', null);
 
+    const [historicalRecords, setHistoricalRecords] = useLocalStorage<HistoricalInterviewRecord[]>('historicalRecords', []);
+    const [templates, setTemplates] = useLocalStorage<InterviewTemplate[]>('interviewTemplates', DEFAULT_TEMPLATES.map((t, i) => ({ ...t, id: `default-${i}` })));
+
+    // Sync user state with view
     useEffect(() => {
-        if (!templatesInitialized) {
-            const initialTemplatesWithIds: InterviewTemplate[] = DEFAULT_TEMPLATES.map((t, index) => ({
-                ...t,
-                id: `default-${Date.now()}-${index}`
-            }));
-            setTemplates(initialTemplatesWithIds);
-            setTemplatesInitialized(true);
-        }
-    }, [templatesInitialized, setTemplates, setTemplatesInitialized]);
-    
-    const stopMediaStreams = useCallback(() => {
-        if (mediaStreamsRef.current) {
-            mediaStreamsRef.current.camera.getTracks().forEach(track => track.stop());
-            mediaStreamsRef.current.screen.getTracks().forEach(track => track.stop());
-            mediaStreamsRef.current = null;
-            setMediaStreams(null);
-        }
-    }, []);
-
-    const clearInterviewState = useCallback(() => {
-        stopMediaStreams();
-        setCompanyName('');
-        setJobTitle('');
-        setJobDescription('');
-        setCandidateEmail('');
-        setResumeText('');
-        setResumeFileName(null);
-        setExtractedSkills([]);
-        setChatHistory([]);
-        setFinalReport(null);
-        setError(null);
-        setIsLoading(false);
-        setIsAiResponding(false);
-        setChatWarningCount(0);
-        setIsChatTerminated(false);
-        setIsCandidateDeeplyIdle(false);
-    }, [stopMediaStreams]);
-
-    const handleRestart = useCallback(() => {
-        clearInterviewState();
-        dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.SETUP });
-    }, [clearInterviewState]);
-
-    const handleLogout = useCallback(() => {
-        clearInterviewState();
-        dispatch({ type: 'LOGOUT' });
-    }, [clearInterviewState]);
-    
-    const handleUpdateRecord = (recordId: string, updatedFields: Partial<HistoricalInterviewRecord>) => {
-        setHistory(prevHistory => 
-            prevHistory.map(record => 
-                record.id === recordId ? { ...record, ...updatedFields } : record
-            )
-        );
-    };
-
-    const handleCandidateIdle = () => {
-        if (isAiResponding || isCandidateDeeplyIdle) return;
-    
-        const lastMessage = chatHistory.length > 0 ? chatHistory[chatHistory.length - 1] : null;
-    
-        if (lastMessage && lastMessage.role === 'ai') {
-            if (lastMessage.isNudge) {
-                // Already nudged, now show the modal.
-                setIsCandidateDeeplyIdle(true);
-            } else {
-                // First idle period, send a nudge.
-                const nudgeMessage: ChatMessage = {
-                    role: 'ai',
-                    content: "Just checking in, are you still there? Please take your time to respond.",
-                    isNudge: true
-                };
-                setChatHistory(prev => [...prev, nudgeMessage]);
+        // This effect handles routing based on authentication state.
+        if (currentUser && magicToken) {
+            // User is logged in. If they are on a public page (Landing/Login), redirect them.
+            if (state.view === ViewState.LANDING || state.view === ViewState.LOGIN) {
+                dispatch({ type: 'SET_VIEW', payload: currentUser.role === 'HR' ? ViewState.HISTORY : ViewState.SETUP });
+            }
+        } else {
+            // User is not logged in. If they are on a protected page, redirect them to Landing.
+            const protectedViews = [ViewState.SETUP, ViewState.INTERVIEW, ViewState.LIVE, ViewState.RESULTS, ViewState.HISTORY];
+            if (protectedViews.includes(state.view)) {
+                 dispatch({ type: 'SET_VIEW', payload: ViewState.LANDING });
             }
         }
+    }, [currentUser, magicToken, state.view]);
+
+    const handleError = (err: any) => {
+        console.error(err);
+        const message = err instanceof Error ? err.message : 'An unexpected error occurred.';
+        setError(message);
+        setIsLoading(false);
+    };
+
+    const handleInitiateLogin = (role: User['role']) => {
+        setLoginRole(role);
+        dispatch({ type: 'SET_VIEW', payload: ViewState.LOGIN });
+    };
+
+    const handleLogin = (email: string, role: User['role']) => {
+        setIsLoading(true);
+        // Simulate API call to generate and send magic link
+        setTimeout(() => {
+            const user: User = { name: email.split('@')[0], role };
+            const token: MagicToken = { 
+                token: `magic_${Math.random().toString(36).substring(2)}`,
+                email,
+                role,
+                expiresAt: Date.now() + 3600 * 1000 // Expires in 1 hour
+            };
+            setCurrentUser(user);
+            setMagicToken(token);
+            // The useEffect will handle the view transition
+            setIsLoading(false);
+        }, 1500);
+    };
+
+    const handleLogout = () => {
+        setCurrentUser(null);
+        setMagicToken(null);
+        dispatch({ type: 'SET_VIEW', payload: ViewState.LANDING });
     };
 
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            setResumeFileName(file.name);
-            setExtractedSkills([]);
+            setIsLoading(true);
             setIsExtractingSkills(true);
-            setError(null);
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const text = e.target?.result as string;
-                setResumeText(text || "File content could not be read.");
-                if (text) {
-                    try {
-                        const skills = await aiRecruiterService.extractSkillsFromResume(text);
-                        setExtractedSkills(skills);
-                    } catch (err: any) {
-                        setError(`Failed to extract skills from resume: ${err.message}. Please try another file.`);
-                        setResumeFileName(null);
-                        setResumeText('');
-                        setExtractedSkills([]);
-                    } finally {
-                        setIsExtractingSkills(false);
-                    }
-                } else {
-                    setIsExtractingSkills(false);
-                }
-            };
-            reader.readAsText(file);
+            try {
+                // For simplicity, we'll just read as text. In a real app, you'd handle PDF/DOCX parsing.
+                const text = await file.text();
+                const skills = await aiRecruiterService.extractSkillsFromResume(text);
+                dispatch({ type: 'SETUP_INTERVIEW', payload: { resumeText: text, resumeFileName: file.name, extractedSkills: skills } });
+            } catch (err) {
+                handleError(err);
+            } finally {
+                setIsLoading(false);
+                setIsExtractingSkills(false);
+            }
         }
     };
-    
-    const handleStartInterview = async () => {
-        if (!jobTitle.trim() || !jobDescription.trim() || !resumeText) {
-            setError("Job title, job description and resume are required.");
-            return;
+
+    const requestMediaPermissions = async (): Promise<MediaStreams | null> => {
+        try {
+            const cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+            return { camera: cameraStream, screen: screenStream };
+        } catch (err) {
+            handleError(new Error("Camera and screen sharing permissions are required for a live interview. Please grant access and try again."));
+            return null;
         }
+    };
+
+    const handleStart = async () => {
         setIsLoading(true);
         setError(null);
-
-        const jobContext = `Job Title: ${jobTitle}\n\n${jobDescription}`;
-
-        if (interviewType === InterviewType.CHAT) {
-            try {
-                const firstMessage = await aiRecruiterService.generateFirstQuestion(jobContext, resumeText);
-                setChatHistory([firstMessage]);
-                dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.INTERVIEW });
-            } catch (e: any) {
-                setError(e.message);
-                console.error(e);
-            } finally {
-                setIsLoading(false);
-            }
-        } else if (interviewType === InterviewType.LIVE) {
-             try {
-                const cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: { suppressLocalAudioPlayback: true } as any });
-                
-                const streams = { camera: cameraStream, screen: screenStream };
-                mediaStreamsRef.current = streams;
+        if (state.interviewType === InterviewType.LIVE) {
+            const streams = await requestMediaPermissions();
+            if (streams) {
                 setMediaStreams(streams);
-                dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.LIVE });
+                dispatch({ type: 'SET_VIEW', payload: ViewState.LIVE });
+            }
+            setIsLoading(false);
+        } else {
+             try {
+                const firstQuestion = await aiRecruiterService.generateFirstQuestion(state.jobDescription, state.resumeText);
+                dispatch({ type: 'START_INTERVIEW', payload: firstQuestion });
+            } catch (err) {
+                handleError(err);
             } finally {
                 setIsLoading(false);
             }
-        }
-    };
-    
-    const handleSendMessage = async (message: string) => {
-        if (isChatTerminated) return;
-        
-        setIsAiResponding(true);
-        setError(null);
-        
-        const isCodingSubmission = chatHistory[chatHistory.length - 1]?.is_coding_challenge;
-        const codeSubmission = isCodingSubmission ? message : undefined;
-        
-        const newUserMessage: ChatMessage = { role: 'user', content: message };
-        const currentChatHistory = [...chatHistory, newUserMessage];
-        setChatHistory(currentChatHistory);
-
-        // Analyze user response for cheating
-        try {
-            const proctoringResult = await aiRecruiterService.analyzeTextResponse(message);
-            if (proctoringResult.cheating_detected) {
-                const newWarningCount = chatWarningCount + 1;
-                setChatWarningCount(newWarningCount);
-                if (newWarningCount >= 2) {
-                     setIsChatTerminated(true);
-                     setIsAiResponding(false);
-                     return;
-                }
-                
-                setChatHistory(prev => {
-                    const lastMessage = prev[prev.length - 1];
-                    if (lastMessage.role === 'user') {
-                        return [
-                            ...prev.slice(0, -1),
-                            { ...lastMessage, proctoringResult: { flagged: true, reason: proctoringResult.reason } }
-                        ];
-                    }
-                    return prev;
-                });
-            }
-        } catch (e: any) {
-            console.error("Proctoring analysis failed:", e.message);
-        }
-
-        const jobContext = `Job Title: ${jobTitle}\n\n${jobDescription}`;
-
-        try {
-            const nextStep = await aiRecruiterService.getNextStep(currentChatHistory, jobContext, resumeText, extractedSkills);
-
-            // Update last user message with analysis
-            setChatHistory(prev => {
-                const lastMessage = prev[prev.length - 1];
-                if(lastMessage.role === 'user') {
-                   return [...prev.slice(0, -1), { ...lastMessage, analysis: nextStep.analysis }];
-                }
-                return prev;
-            });
-
-            const aiResponse: ChatMessage = {
-                role: 'ai',
-                content: nextStep.nextQuestion.question_text,
-                is_coding_challenge: nextStep.nextQuestion.is_coding_challenge
-            };
-            setChatHistory(prev => [...prev, aiResponse]);
-
-            if (nextStep.interview_is_over) {
-                setIsLoading(true);
-                dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.RESULTS });
-                const finalHistory = [...currentChatHistory, aiResponse];
-                const report = await aiRecruiterService.generateFinalReport(finalHistory, jobContext, resumeText, codeSubmission, extractedSkills);
-                setFinalReport(report);
-
-                 // Save to history
-                const newRecord: HistoricalInterviewRecord = {
-                    id: new Date().toISOString(),
-                    date: new Date().toLocaleDateString(),
-                    jobTitle: jobTitle,
-                    candidateName: currentUser?.name || 'Candidate',
-                    candidateEmail: candidateEmail,
-                    resumeFileName: resumeFileName || 'N/A',
-                    jobDescriptionSnippet: jobDescription.substring(0, 100) + '...',
-                    report: report,
-                    status: CandidateStatus.PENDING,
-                    notes: '',
-                    resumeText: resumeText,
-                    extractedSkills: extractedSkills,
-                };
-                setHistory(prev => [newRecord, ...prev]);
-
-                setIsLoading(false);
-            }
-        } catch (e: any) {
-            setError(e.message);
-            console.error(e);
-        } finally {
-            setIsAiResponding(false);
         }
     };
 
     const handleEndLiveInterview = async (transcript: TranscriptEntry[], code: string, videoUrl: string) => {
-        stopMediaStreams();
-        dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.RESULTS });
         setIsLoading(true);
         setError(null);
-        
-        const jobContext = `Job Title: ${jobTitle}\n\n${jobDescription}`;
-
-        // Convert transcript to chat history format for report generation
-        const chatHistoryForReport: ChatMessage[] = transcript.map(t => ({
-            role: t.speaker,
-            content: t.text
-        }));
-
+        dispatch({ type: 'END_LIVE_INTERVIEW', payload: { transcript, code, videoUrl }});
         try {
-            const report = await aiRecruiterService.generateFinalReport(chatHistoryForReport, jobContext, resumeText, code, extractedSkills);
-            setFinalReport(report);
-
-            // Save to history
+            const historyForReport = transcript.map(t => ({ role: t.speaker, content: t.text })) as ChatMessage[];
+            const report = await aiRecruiterService.generateFinalReport(historyForReport, state.jobDescription, state.resumeText, code, state.extractedSkills);
+            
             const newRecord: HistoricalInterviewRecord = {
                 id: new Date().toISOString(),
-                date: new Date().toLocaleDateString(),
-                jobTitle: jobTitle,
-                candidateName: currentUser?.name || 'Candidate',
-                candidateEmail: candidateEmail,
-                resumeFileName: resumeFileName || 'N/A',
-                jobDescriptionSnippet: jobDescription.substring(0, 100) + '...',
-                report: report,
+                date: new Date().toLocaleString(),
+                jobTitle: state.jobTitle,
+                candidateName: currentUser?.name || state.candidateEmail.split('@')[0],
+                candidateEmail: state.candidateEmail,
+                resumeFileName: state.resumeFileName || 'N/A',
+                resumeText: state.resumeText,
+                extractedSkills: state.extractedSkills,
+                jobDescriptionSnippet: state.jobDescription.substring(0, 100) + '...',
+                report,
                 status: CandidateStatus.PENDING,
-                notes: '',
-                resumeText: resumeText,
-                extractedSkills: extractedSkills,
+                transcript,
                 videoRecordingUrl: videoUrl,
-                transcript: transcript,
             };
-            setHistory(prev => [newRecord, ...prev]);
-
-        } catch (e: any) {
-            setError(e.message);
-            console.error(e);
+            setHistoricalRecords(prev => [...prev, newRecord]);
+            
+            dispatch({ type: 'SET_FINAL_REPORT', payload: report });
+        } catch (err) {
+            handleError(err);
         } finally {
             setIsLoading(false);
+             // Stop media streams after interview ends
+            mediaStreams?.camera.getTracks().forEach(track => track.stop());
+            mediaStreams?.screen.getTracks().forEach(track => track.stop());
+            setMediaStreams(null);
         }
     };
 
-    const handleLoadTemplate = (template: InterviewTemplate) => {
-        setCompanyName(template.companyName);
-        setJobTitle(template.jobTitle);
-        setJobDescription(template.jobDescription);
+    const handleSendMessage = useCallback(async (message: string) => {
+        setError(null);
+        const userMessage: ChatMessage = { role: 'user', content: message };
+        dispatch({ type: 'SEND_MESSAGE', payload: userMessage });
+
+        // If it's a coding challenge, just store the code and wait for AI's next step
+        if (state.chatHistory[state.chatHistory.length - 1]?.is_coding_challenge) {
+            dispatch({ type: 'SET_CODE', payload: message });
+        }
+
+        try {
+            // Text Proctoring
+            const proctorResult = await aiRecruiterService.analyzeTextResponse(message);
+            if (proctorResult.cheating_detected) {
+                const messageIndex = state.chatHistory.length; // The index of the user's message
+                dispatch({ type: 'FLAG_MESSAGE', payload: { index: messageIndex, reason: proctorResult.reason } });
+                dispatch({ type: 'INCREMENT_WARNING' });
+                if (state.warningCount + 1 >= 2) {
+                    dispatch({ type: 'TERMINATE_INTERVIEW' });
+                    return;
+                }
+            }
+            
+            // Get AI's next step
+            const nextStep = await aiRecruiterService.getNextStep(
+                [...state.chatHistory, userMessage], 
+                state.jobDescription, 
+                state.resumeText,
+                state.extractedSkills
+            );
+
+            const aiResponse: ChatMessage = {
+                role: 'ai',
+                content: nextStep.nextQuestion.question_text,
+                analysis: nextStep.analysis,
+                is_coding_challenge: nextStep.nextQuestion.is_coding_challenge
+            };
+            dispatch({ type: 'RECEIVE_AI_RESPONSE', payload: { message: aiResponse, nextQuestion: true, isGameOver: nextStep.interview_is_over }});
+
+            if (nextStep.interview_is_over) {
+                setIsLoading(true);
+                const finalReport = await aiRecruiterService.generateFinalReport(
+                    [...state.chatHistory, userMessage, aiResponse], 
+                    state.jobDescription, 
+                    state.resumeText,
+                    state.codeSubmission,
+                    state.extractedSkills
+                );
+                
+                const newRecord: HistoricalInterviewRecord = {
+                    id: new Date().toISOString(),
+                    date: new Date().toLocaleString(),
+                    jobTitle: state.jobTitle,
+                    candidateName: currentUser?.name || state.candidateEmail.split('@')[0],
+                    candidateEmail: state.candidateEmail,
+                    resumeFileName: state.resumeFileName || 'N/A',
+                    resumeText: state.resumeText,
+                    extractedSkills: state.extractedSkills,
+                    jobDescriptionSnippet: state.jobDescription.substring(0, 100) + '...',
+                    report: finalReport,
+                    status: CandidateStatus.PENDING,
+                };
+                setHistoricalRecords(prev => [...prev, newRecord]);
+
+                dispatch({ type: 'SET_FINAL_REPORT', payload: finalReport });
+                setIsLoading(false);
+            }
+        } catch (err) {
+            handleError(err);
+            const aiErrorResponse: ChatMessage = { role: 'ai', content: "I seem to be having trouble connecting. Please try again in a moment." };
+            dispatch({ type: 'RECEIVE_AI_RESPONSE', payload: { message: aiErrorResponse } });
+        }
+    }, [state.chatHistory, state.jobDescription, state.resumeText, state.codeSubmission, state.warningCount, state.extractedSkills, currentUser, state.candidateEmail, state.resumeFileName, setHistoricalRecords]);
+    
+    const handleRestart = () => {
+        const targetView = currentUser?.role === 'HR' ? ViewState.HISTORY : ViewState.SETUP;
+        dispatch({ type: 'RESET', payload: { view: targetView } });
+        setError(null);
+        setIsLoading(false);
+        // Stop media streams if they are active
+        if (mediaStreams) {
+            mediaStreams.camera.getTracks().forEach(track => track.stop());
+            mediaStreams.screen.getTracks().forEach(track => track.stop());
+            setMediaStreams(null);
+        }
+    };
+    
+    const handleAddTemplate = (template: Omit<InterviewTemplate, 'id'>) => {
+        const newTemplate = { ...template, id: new Date().toISOString() };
+        setTemplates(prev => [...prev, newTemplate]);
     };
 
-    const renderContent = () => {
-        switch (viewState) {
+    const handleUpdateTemplate = (updatedTemplate: InterviewTemplate) => {
+        setTemplates(prev => prev.map(t => t.id === updatedTemplate.id ? updatedTemplate : t));
+    };
+
+    const handleDeleteTemplate = (templateId: string) => {
+        setTemplates(prev => prev.filter(t => t.id !== templateId));
+    };
+
+    const handleUpdateRecord = (id: string, fields: Partial<HistoricalInterviewRecord>) => {
+        setHistoricalRecords(prev => prev.map(r => r.id === id ? { ...r, ...fields } : r));
+    };
+    
+    const renderView = () => {
+        switch (state.view) {
             case ViewState.LANDING:
-                return <LandingPage onLoginClick={() => dispatch({ type: 'SET_VIEW_STATE', payload: ViewState.LOGIN })} />;
+                return <LandingPage onInitiateLogin={handleInitiateLogin} />;
             case ViewState.LOGIN:
-                return <LoginPage onLogin={(user) => dispatch({ type: 'LOGIN', payload: user })} />;
+                return <LoginScreen 
+                    onLogin={handleLogin}
+                    onBack={() => dispatch({ type: 'SET_VIEW', payload: ViewState.LANDING })}
+                    isLoading={isLoading}
+                    initialRole={loginRole}
+                />;
             case ViewState.SETUP:
                 return (
                     <SetupScreen
-                        companyName={companyName} setCompanyName={setCompanyName}
-                        jobTitle={jobTitle} setJobTitle={setJobTitle}
-                        jobDescription={jobDescription} setJobDescription={setJobDescription}
-                        candidateEmail={candidateEmail} setCandidateEmail={setCandidateEmail}
-                        onStart={handleStartInterview}
+                        companyName={state.companyName}
+                        setCompanyName={(val) => dispatch({ type: 'SETUP_INTERVIEW', payload: { companyName: val } })}
+                        jobTitle={state.jobTitle}
+                        setJobTitle={(val) => dispatch({ type: 'SETUP_INTERVIEW', payload: { jobTitle: val } })}
+                        jobDescription={state.jobDescription}
+                        setJobDescription={(val) => dispatch({ type: 'SETUP_INTERVIEW', payload: { jobDescription: val } })}
+                        candidateEmail={state.candidateEmail}
+                        setCandidateEmail={(val) => dispatch({ type: 'SETUP_INTERVIEW', payload: { candidateEmail: val } })}
+                        onStart={handleStart}
                         isLoading={isLoading}
                         onFileChange={handleFileChange}
-                        resumeFileName={resumeFileName}
-                        onRemoveResume={() => { setResumeFileName(null); setResumeText(''); setExtractedSkills([]); }}
-                        interviewType={interviewType}
-                        setInterviewType={setInterviewType}
+                        resumeFileName={state.resumeFileName}
+                        onRemoveResume={() => dispatch({ type: 'SETUP_INTERVIEW', payload: { resumeFileName: null, resumeText: '', extractedSkills: [] }})}
+                        interviewType={state.interviewType}
+                        setInterviewType={(type) => dispatch({ type: 'SET_INTERVIEW_TYPE', payload: type })}
                         templates={templates}
-                        onLoadTemplate={handleLoadTemplate}
+                        onLoadTemplate={(t) => dispatch({type: 'SETUP_INTERVIEW', payload: { jobTitle: t.jobTitle, jobDescription: t.jobDescription, companyName: t.companyName }})}
                         currentUser={currentUser}
                         onLogout={handleLogout}
                         isExtractingSkills={isExtractingSkills}
-                        extractedSkills={extractedSkills}
+                        extractedSkills={state.extractedSkills}
                     />
                 );
             case ViewState.INTERVIEW:
-                return (
-                    <InterviewScreen
-                        chatHistory={chatHistory}
-                        onSendMessage={handleSendMessage}
-                        isAiResponding={isAiResponding}
-                        questionCount={chatHistory.filter(m => m.role === 'ai' && !m.isGreeting && !m.isNudge).length}
-                        onRestart={handleRestart}
-                        warningCount={chatWarningCount}
-                        isTerminated={isChatTerminated}
-                        onConfirmTermination={handleRestart}
-                        currentUser={currentUser}
-                        onCandidateIdle={handleCandidateIdle}
-                        isDeeplyIdle={isCandidateDeeplyIdle}
-                        onContinueInterview={() => setIsCandidateDeeplyIdle(false)}
-                    />
-                );
+                return <InterviewScreen 
+                    chatHistory={state.chatHistory} 
+                    onSendMessage={handleSendMessage}
+                    isAiResponding={isLoading || (state.chatHistory.length > 0 && state.chatHistory[state.chatHistory.length - 1].role === 'user')}
+                    questionCount={state.questionCount}
+                    onRestart={handleRestart}
+                    warningCount={state.warningCount}
+                    isTerminated={state.isTerminated}
+                    onConfirmTermination={handleRestart}
+                    currentUser={currentUser}
+                    onCandidateIdle={() => dispatch({ type: 'SET_IDLE_STATE', payload: true })}
+                    isDeeplyIdle={state.isDeeplyIdle}
+                    onContinueInterview={() => dispatch({ type: 'SET_IDLE_STATE', payload: false })}
+                />;
             case ViewState.LIVE:
-                return (
-                    <LiveInterviewScreen 
-                        mediaStreams={mediaStreams}
-                        onEndInterview={handleEndLiveInterview}
-                        jobDescription={jobDescription}
-                        resumeText={resumeText}
-                        onRestart={handleRestart}
-                        currentUser={currentUser}
-                    />
-                );
+                return <LiveInterviewScreen 
+                    mediaStreams={mediaStreams}
+                    onEndInterview={handleEndLiveInterview}
+                    jobDescription={state.jobDescription}
+                    resumeText={state.resumeText}
+                    onRestart={handleRestart}
+                    currentUser={currentUser}
+                />;
             case ViewState.RESULTS:
-                return <ResultsScreen report={finalReport} onRestart={handleRestart} isLoading={isLoading} />;
-            case ViewState.HISTORY:
-                return (
-                    <HrDashboard
-                        records={history}
-                        templates={templates}
-                        onAddTemplate={(t) => setTemplates(prev => [...prev, {...t, id: `user-${Date.now()}`}])}
-                        onUpdateTemplate={(t) => setTemplates(prev => prev.map(pt => pt.id === t.id ? t : pt))}
-                        onDeleteTemplate={(id) => setTemplates(prev => prev.filter(t => t.id !== id))}
-                        onLogout={handleLogout}
-                        onUpdateRecord={handleUpdateRecord}
-                        currentUser={currentUser}
-                    />
-                );
+                return <ResultsScreen report={state.finalReport} onRestart={handleRestart} isLoading={isLoading} />;
+             case ViewState.HISTORY:
+                return <HrDashboard 
+                    records={historicalRecords}
+                    templates={templates}
+                    onAddTemplate={handleAddTemplate}
+                    onUpdateTemplate={handleUpdateTemplate}
+                    onDeleteTemplate={handleDeleteTemplate}
+                    onLogout={handleLogout}
+                    onUpdateRecord={handleUpdateRecord}
+                    currentUser={currentUser}
+                />;
             default:
-                return <div>Invalid state</div>;
+                return <div>Invalid State</div>;
         }
     };
-
+    
     return (
         <>
             <DarkVeilBackground />
-            <div className="font-sans">
+            <div className="w-full h-full font-sans antialiased">
                 {error && <ErrorDisplay message={error} onDismiss={() => setError(null)} />}
-                {renderContent()}
+                {renderView()}
             </div>
         </>
     );
 };
 
-// FIX: Added a default export for the App component.
 export default App;
