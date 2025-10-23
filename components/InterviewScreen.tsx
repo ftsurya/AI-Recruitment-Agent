@@ -102,6 +102,13 @@ const DeepIdleModal: React.FC<{ onContinue: () => void; onRestart: () => void }>
     </div>
 );
 
+const thinkingMessages = [
+    "Analyzing your response...",
+    "Comparing with your resume and the job description...",
+    "Formulating the next question based on your skills...",
+    "Just a moment, preparing my thoughts...",
+];
+
 
 const InterviewScreen: React.FC<InterviewScreenProps> = ({
   chatHistory,
@@ -122,6 +129,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
   const [showWarning, setShowWarning] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const idleTimerRef = useRef<number | null>(null);
+  const [currentThinkingMessage, setCurrentThinkingMessage] = useState(thinkingMessages[0]);
   
   const isCodingActive = chatHistory[chatHistory.length - 1]?.is_coding_challenge ?? false;
 
@@ -129,7 +137,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [chatHistory]);
+  }, [chatHistory, isAiResponding]);
   
   useEffect(() => {
     if (warningCount > 0 && warningCount < 2) {
@@ -161,6 +169,22 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
         }
     };
   }, [chatHistory, isAiResponding, onCandidateIdle, isDeeplyIdle]);
+
+  // Effect for cycling through thinking messages
+    useEffect(() => {
+        if (isAiResponding) {
+            setCurrentThinkingMessage(thinkingMessages[0]); // Reset on new response
+            const interval = setInterval(() => {
+                setCurrentThinkingMessage(prev => {
+                    const currentIndex = thinkingMessages.indexOf(prev);
+                    const nextIndex = (currentIndex + 1) % thinkingMessages.length;
+                    return thinkingMessages[nextIndex];
+                });
+            }, 2500); // Change message every 2.5 seconds
+
+            return () => clearInterval(interval);
+        }
+    }, [isAiResponding]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,12 +237,10 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
           <ChatBubble key={index} message={msg} />
         ))}
         {isAiResponding && (
-          <div className="flex justify-start items-end gap-3">
+          <div className="flex justify-start items-end gap-3 animate-fade-in">
              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex-shrink-0"></div>
-             <div className="bg-slate-800/50 backdrop-blur-lg border border-slate-600/50 p-4 rounded-2xl rounded-bl-none flex items-center space-x-2">
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
+             <div className="bg-slate-800/50 backdrop-blur-lg border border-slate-600/50 p-4 rounded-2xl rounded-bl-none">
+                <p className="text-slate-300 italic">{currentThinkingMessage}</p>
              </div>
           </div>
         )}

@@ -16,6 +16,7 @@ interface LiveInterviewScreenProps {
     resumeText: string;
     onRestart: () => void;
     currentUser: User | null;
+    onError: (error: Error) => void;
 }
 
 type AiStatus = "Idle" | "Listening" | "Thinking" | "Speaking";
@@ -96,7 +97,7 @@ const ProctoringWarning: React.FC<{ text: string }> = ({ text }) => (
 );
 
 
-const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams, onEndInterview, jobDescription, resumeText, onRestart, currentUser }) => {
+const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams, onEndInterview, jobDescription, resumeText, onRestart, currentUser, onError }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const webcamCanvasRef = useRef<HTMLCanvasElement>(null);
     
@@ -372,14 +373,17 @@ const LiveInterviewScreen: React.FC<LiveInterviewScreenProps> = ({ mediaStreams,
                             audioSourcesRef.current.add(source);
                         }
                     },
-                    onerror: (e) => console.error("Session error:", e),
+                    onerror: (e: any) => {
+                        console.error("Session error:", e);
+                        onError(new Error("The live interview connection failed. The service may be temporarily unavailable. Please restart the interview."));
+                    },
                     onclose: () => console.log('Session closed.'),
                 }
             });
             sessionPromise.then(session => sessionRef.current = session);
         }
         return () => cleanup();
-    }, [mediaStreams, jobDescription, resumeText, volume, cleanup, runProctoringCheck, isTerminated]);
+    }, [mediaStreams, jobDescription, resumeText, volume, cleanup, runProctoringCheck, isTerminated, onError, handleCheatingDetected, handleToggleMute, isAbsenceWarningActive, isMuted, speakWarning]);
 
     const handleEnd = async () => {
         // Converts a Blob to a base64 data URL for persistent storage

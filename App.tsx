@@ -1,5 +1,8 @@
 
 
+
+
+
 import React, { useState, useCallback, useRef, useReducer, useEffect } from 'react';
 import { ViewState, InterviewType, ChatMessage, FinalReport, HistoricalInterviewRecord, CandidateStatus, TranscriptEntry, InterviewTemplate, User, MagicToken } from './types';
 import { aiRecruiterService } from './services/geminiService';
@@ -540,13 +543,13 @@ const App: React.FC = () => {
                 candidateName: currentUser?.name || state.candidateEmail.split('@')[0],
                 candidateEmail: state.candidateEmail,
                 resumeFileName: state.resumeFileName || 'N/A',
-                resumeText: state.resumeText,
+                // resumeText: state.resumeText, // Omitted to avoid LocalStorage quota issues.
                 extractedSkills: state.extractedSkills,
                 jobDescriptionSnippet: state.jobDescription.substring(0, 100) + '...',
                 report,
                 status: CandidateStatus.PENDING,
                 transcript,
-                videoRecordingUrl: videoUrl,
+                // videoRecordingUrl: videoUrl, // Omitted to avoid LocalStorage quota issues. Video is too large.
             };
             setHistoricalRecords(prev => [...prev, newRecord]);
             
@@ -618,7 +621,7 @@ const App: React.FC = () => {
                     candidateName: currentUser?.name || state.candidateEmail.split('@')[0],
                     candidateEmail: state.candidateEmail,
                     resumeFileName: state.resumeFileName || 'N/A',
-                    resumeText: state.resumeText,
+                    // resumeText: state.resumeText, // Omitted to avoid LocalStorage quota issues.
                     extractedSkills: state.extractedSkills,
                     jobDescriptionSnippet: state.jobDescription.substring(0, 100) + '...',
                     report: finalReport,
@@ -726,6 +729,7 @@ const App: React.FC = () => {
                     resumeText={state.resumeText}
                     onRestart={handleRestart}
                     currentUser={currentUser}
+                    onError={handleError}
                 />;
             case ViewState.RESULTS:
                 return <ResultsScreen report={state.finalReport} onRestart={handleRestart} isLoading={isLoading} />;
